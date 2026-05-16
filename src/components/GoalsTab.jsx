@@ -31,23 +31,42 @@ function stdDev(arr) {
 
 /* ── badges definition ── */
 const BADGES = [
-  { id: 'first',    label: 'Prima Misurazione', icon: '🌱', desc: 'Hai iniziato il tuo percorso', check: (m, p, kg) => m.length >= 1 },
-  { id: 'week',     label: '7 Giorni',          icon: '📅', desc: 'Una settimana di tracking',   check: (m) => calcStreak(m) >= 7 },
-  { id: 'month',    label: '30 Giorni',          icon: '🗓️',  desc: 'Un mese di costanza',         check: (m) => calcStreak(m) >= 30 },
-  { id: 'kg5',      label: '-5 kg',             icon: '🥉', desc: 'Persi 5 kg in totale',        check: (m, p, kg) => +p.peso_iniziale - kg >= 5 },
-  { id: 'kg10',     label: '-10 kg',            icon: '🥈', desc: 'Persi 10 kg in totale',       check: (m, p, kg) => +p.peso_iniziale - kg >= 10 },
-  { id: 'kg15',     label: '-15 kg',            icon: '🥇', desc: 'Persi 15 kg in totale',       check: (m, p, kg) => +p.peso_iniziale - kg >= 15 },
-  { id: 'half',     label: 'Metà Strada',       icon: '⚡', desc: '50% dell\'obiettivo raggiunto', check: (m, p, kg) => {
-    const diff = +p.peso_iniziale - +p.obiettivo_kg;
-    const done = +p.peso_iniziale - kg;
-    return diff > 0 && (done/diff) >= 0.5;
+  // Inizio
+  { id: 'first',   label: 'Prima Misura',  icon: '🌱', desc: 'Hai iniziato il percorso',     check: (m) => m.length >= 1 },
+  { id: 'meas5',   label: '5 Misurazioni', icon: '📋', desc: '5 rilevazioni completate',     check: (m) => m.length >= 5 },
+  { id: 'meas10',  label: '10 Misure',     icon: '📊', desc: '10 rilevazioni completate',    check: (m) => m.length >= 10 },
+  { id: 'meas25',  label: '25 Misure',     icon: '📈', desc: '25 rilevazioni completate',    check: (m) => m.length >= 25 },
+  { id: 'meas50',  label: '50 Misure',     icon: '🗂️',  desc: '50 rilevazioni completate',    check: (m) => m.length >= 50 },
+  { id: 'meas100', label: '100 Misure',    icon: '💯', desc: 'Cento misurazioni!',           check: (m) => m.length >= 100 },
+  // Streak
+  { id: 'str3',    label: '3 Giorni',      icon: '🔥', desc: '3 giorni consecutivi',         check: (m) => calcStreak(m) >= 3 },
+  { id: 'str7',    label: '7 Giorni',      icon: '📅', desc: 'Una settimana di tracking',    check: (m) => calcStreak(m) >= 7 },
+  { id: 'str14',   label: '2 Settimane',   icon: '🗓️',  desc: '14 giorni consecutivi',        check: (m) => calcStreak(m) >= 14 },
+  { id: 'str30',   label: '1 Mese',        icon: '🌙', desc: '30 giorni di costanza',        check: (m) => calcStreak(m) >= 30 },
+  { id: 'str60',   label: '2 Mesi',        icon: '⭐', desc: '60 giorni consecutivi',        check: (m) => calcStreak(m) >= 60 },
+  { id: 'str100',  label: '100 Giorni',    icon: '💫', desc: 'Cento giorni di streak!',      check: (m) => calcStreak(m) >= 100 },
+  // Peso perso
+  { id: 'kg1',     label: '-1 kg',         icon: '✅', desc: 'Primo kg perso!',              check: (m, p, kg) => +p.peso_iniziale - kg >= 1 },
+  { id: 'kg3',     label: '-3 kg',         icon: '💪', desc: 'Persi 3 kg in totale',         check: (m, p, kg) => +p.peso_iniziale - kg >= 3 },
+  { id: 'kg5',     label: '-5 kg',         icon: '🥉', desc: 'Persi 5 kg in totale',         check: (m, p, kg) => +p.peso_iniziale - kg >= 5 },
+  { id: 'kg10',    label: '-10 kg',        icon: '🥈', desc: 'Persi 10 kg in totale',        check: (m, p, kg) => +p.peso_iniziale - kg >= 10 },
+  { id: 'kg15',    label: '-15 kg',        icon: '🥇', desc: 'Persi 15 kg in totale',        check: (m, p, kg) => +p.peso_iniziale - kg >= 15 },
+  { id: 'kg20',    label: '-20 kg',        icon: '🏅', desc: 'Persi 20 kg in totale',        check: (m, p, kg) => +p.peso_iniziale - kg >= 20 },
+  { id: 'kg25',    label: '-25 kg',        icon: '🎖️',  desc: 'Persi 25 kg in totale',        check: (m, p, kg) => +p.peso_iniziale - kg >= 25 },
+  // Obiettivo %
+  { id: 'pct25',   label: '25% Goal',      icon: '🚀', desc: 'Un quarto del percorso fatto', check: (m, p, kg) => { const d=+p.peso_iniziale - +p.obiettivo_kg; return d>0 && (+p.peso_iniziale-kg)/d>=0.25; } },
+  { id: 'half',    label: 'Metà Strada',   icon: '⚡', desc: '50% obiettivo raggiunto',      check: (m, p, kg) => { const d=+p.peso_iniziale - +p.obiettivo_kg; return d>0 && (+p.peso_iniziale-kg)/d>=0.5; } },
+  { id: 'pct75',   label: '75% Goal',      icon: '🔥', desc: 'Quasi al traguardo!',          check: (m, p, kg) => { const d=+p.peso_iniziale - +p.obiettivo_kg; return d>0 && (+p.peso_iniziale-kg)/d>=0.75; } },
+  { id: 'goal',    label: 'OBIETTIVO!',    icon: '🏆', desc: 'Peso obiettivo raggiunto',     check: (m, p, kg) => kg <= +p.obiettivo_kg },
+  // BMI
+  { id: 'bmi_norm',label: 'BMI Normale',   icon: '💚', desc: 'BMI nel range 18.5–24.9',      check: (m, p, kg) => { const b=kg/((+p.altezza/100)**2); return b>=18.5&&b<25; } },
+  { id: 'bmi_fit', label: 'BMI Ottimale',  icon: '💎', desc: 'BMI nel range 20–22',          check: (m, p, kg) => { const b=kg/((+p.altezza/100)**2); return b>=20&&b<22; } },
+  // Velocità
+  { id: 'fast',    label: 'Velocista',     icon: '⚡', desc: '>0.5 kg/settimana persi',      check: (m) => {
+    if (m.length < 2) return false;
+    const g = Math.round((new Date(m.at(-1).date)-new Date(m[0].date))/86400000);
+    return g > 0 && (Math.abs(+m[0].weight - +m.at(-1).weight)/g)*7 >= 0.5;
   }},
-  { id: 'goal',     label: 'Obiettivo!',        icon: '🏆', desc: 'Peso obiettivo raggiunto',    check: (m, p, kg) => kg <= +p.obiettivo_kg },
-  { id: 'bmi_norm', label: 'BMI Normale',       icon: '💚', desc: 'BMI nel range normopeso',     check: (m, p, kg) => {
-    const bmi = kg / ((+p.altezza/100)**2);
-    return bmi >= 18.5 && bmi < 25;
-  }},
-  { id: 'meas20',   label: '20 Misurazioni',    icon: '📊', desc: '20 rilevazioni completate',   check: (m) => m.length >= 20 },
 ];
 
 function motivationalMsg(pct, streak) {

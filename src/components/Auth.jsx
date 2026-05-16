@@ -43,11 +43,16 @@ export default function Auth({ setUser }) {
       <div className="auth-glow" />
 
       <div className="auth-brand">
-        <div className="auth-logo-wrap">
+        <img
+          src="/logo.png"
+          alt="Peso Tracker"
+          className="auth-logo-img"
+          onError={e => { e.currentTarget.style.display='none'; e.currentTarget.nextSibling.style.display='flex'; }}
+        />
+        <div className="auth-logo-fallback" style={{ display:'none' }}>
           <div className="auth-logo-ring" />
           <div className="auth-logo-inner">⚡</div>
         </div>
-        <div className="auth-brand-name">PESO TRACKER</div>
         <div className="auth-brand-sub">Il tuo percorso. I tuoi dati. Il tuo obiettivo.</div>
       </div>
 

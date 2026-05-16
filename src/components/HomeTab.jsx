@@ -53,8 +53,16 @@ export default function HomeTab({ profile, measurements }) {
       {/* HEADER */}
       <div className="home-header">
         <div className="home-header-left">
-          <span className="home-logo-bolt">⚡</span>
-          <span className="home-logo-text">PESO TRACKER</span>
+          <img
+            src="/logo.png"
+            alt="Peso Tracker"
+            className="home-logo-img"
+            onError={e => { e.currentTarget.style.display='none'; e.currentTarget.nextSibling.style.display='flex'; }}
+          />
+          <span className="home-logo-fallback" style={{ display:'none' }}>
+            <span className="home-logo-bolt">⚡</span>
+            <span className="home-logo-text">PESO TRACKER</span>
+          </span>
         </div>
         <div className="home-bell">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
