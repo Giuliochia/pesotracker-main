@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(del \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\public\\\\index.html\")",
-      "PowerShell(Remove-Item \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\public\\\\index.html\" -Confirm:$false)"
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\public\\\\index.html\" -Confirm:$false)",
+      "Bash(node -e \"require\\('fs'\\); ['src/App.jsx','src/components/Auth.jsx','src/components/Dashboard.jsx','src/components/BottomNav.jsx','src/components/HomeTab.jsx','src/components/HistoryTab.jsx','src/components/GoalsTab.jsx','src/components/ProfileTab.jsx','src/components/AddWeight.jsx','src/components/WeightChart.jsx','src/styles/App.css'].forEach\\(f => { const s = require\\('fs'\\).statSync\\(f\\); console.log\\(f, s.size + 'B'\\); }\\)\")",
+      "Bash(npx vite *)",
+      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\src\\\\styles\\\\App.css\"\\).Count)"
     ]
   }
 }

@@ -1,7 +1,6 @@
 {
   "name": "peso-tracker",
-  "homepage": "https://Giuliochia.github.io/pesotracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "App per tracciare peso e progressi",
   "scripts": {
     "start": "vite",
