@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\public\\\\index.html\")",
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\giuli\\\\Desktop\\\\Progetti\\\\pesotracker-main\\\\public\\\\index.html\" -Confirm:$false)"
+    ]
+  }
+}
