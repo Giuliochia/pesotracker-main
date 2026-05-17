@@ -171,7 +171,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
                 >×</button>
               </div>
             )}
-            <input ref={photoRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handlePhoto} />
+            <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
           </div>
 
           {err && <p className="err">{err}</p>}

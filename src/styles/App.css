@@ -1657,8 +1657,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ═══════════════════════════════════════════════
-   NOTIFICATION SETTINGS IN PROFILE
+   NOTIFICATION PANEL (HOME BELL)
 ═══════════════════════════════════════════════ */
+.notif-panel {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.18);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  animation: fadeSlideDown 0.2s ease;
+}
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.notif-panel-title {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #00FF41;
+  margin-bottom: 14px;
+}
 .notif-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);

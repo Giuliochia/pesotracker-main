@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import WeightChart from './WeightChart';
+import { getSettings, saveSettings, requestPermission, showReminder } from '../utils/notifications';
+
+const FREQ_OPTIONS = [
+  { value: 1, label: 'Ogni giorno' },
+  { value: 2, label: 'Ogni 2 gg' },
+  { value: 3, label: 'Ogni 3 gg' },
+  { value: 7, label: 'Settimanale' },
+];
+const TIME_OPTIONS = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
 
 const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
@@ -19,6 +28,29 @@ const isYesterday = (dateA, dateB) => {
 
 export default function HomeTab({ profile, measurements }) {
   const [chartDays, setChartDays] = useState(7);
+  const [showNotif, setShowNotif] = useState(false);
+  const [notif, setNotif] = useState(() => getSettings());
+  const [notifPerm, setNotifPerm] = useState(() =>
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  const updateNotif = patch => {
+    const next = { ...notif, ...patch };
+    setNotif(next);
+    saveSettings(next);
+  };
+
+  const enableNotifications = async () => {
+    const perm = await requestPermission();
+    setNotifPerm(perm);
+    if (perm === 'granted') {
+      updateNotif({ enabled: true, frequency: notif.frequency || 1, time: notif.time || '08:00' });
+    }
+  };
+
+  const testNotification = async () => {
+    if (notifPerm === 'granted') await showReminder();
+  };
 
   const last  = measurements.at(-1);
   const prev  = measurements.at(-2);
@@ -73,14 +105,77 @@ export default function HomeTab({ profile, measurements }) {
             <span className="home-logo-text">PESO TRACKER</span>
           </span>
         </div>
-        <div className="home-bell">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="home-bell" onClick={() => setShowNotif(v => !v)} style={{ cursor: 'pointer' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={notif.enabled ? '#00FF41' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
-          <span className="home-bell-dot" />
+          {notif.enabled && <span className="home-bell-dot" />}
         </div>
       </div>
+
+      {/* PANNELLO NOTIFICHE */}
+      {showNotif && (
+        <div className="notif-panel">
+          <div className="notif-panel-title">PROMEMORIA PESATA</div>
+          {notifPerm === 'unsupported' ? (
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0 }}>
+              Le notifiche non sono supportate su questo dispositivo.
+            </p>
+          ) : notifPerm === 'denied' ? (
+            <p style={{ color: '#FF4444', fontSize: '0.8rem', margin: 0 }}>
+              Notifiche bloccate. Abilitale dalle impostazioni del browser.
+            </p>
+          ) : (
+            <>
+              <div className="notif-row">
+                <span className="notif-row-lbl">Attiva promemoria</span>
+                {notifPerm !== 'granted' ? (
+                  <button className="btn-notif-enable" onClick={enableNotifications}>Abilita</button>
+                ) : (
+                  <div
+                    className={`ricordami-toggle ${notif.enabled ? 'ricordami-on' : ''}`}
+                    onClick={() => updateNotif({ enabled: !notif.enabled })}
+                  >
+                    <div className="ricordami-thumb" />
+                  </div>
+                )}
+              </div>
+              {notifPerm === 'granted' && notif.enabled && (
+                <>
+                  <div className="notif-section-lbl">Frequenza</div>
+                  <div className="notif-options">
+                    {FREQ_OPTIONS.map(o => (
+                      <button
+                        key={o.value}
+                        className={`notif-opt-btn ${(notif.frequency || 1) === o.value ? 'notif-opt-on' : ''}`}
+                        onClick={() => updateNotif({ frequency: o.value })}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="notif-section-lbl">Orario</div>
+                  <div className="notif-options notif-options-wrap">
+                    {TIME_OPTIONS.map(t => (
+                      <button
+                        key={t}
+                        className={`notif-opt-btn ${(notif.time || '08:00') === t ? 'notif-opt-on' : ''}`}
+                        onClick={() => updateNotif({ time: t })}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="btn-notif-test" onClick={testNotification}>
+                    Invia notifica di test
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* GREETING */}
       <div className="home-greeting">

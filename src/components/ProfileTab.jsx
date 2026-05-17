@@ -1,15 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { getSettings, saveSettings, requestPermission, showReminder } from '../utils/notifications';
-
-const FREQ_OPTIONS = [
-  { value: 1,   label: 'Ogni giorno' },
-  { value: 2,   label: 'Ogni 2 gg' },
-  { value: 3,   label: 'Ogni 3 gg' },
-  { value: 7,   label: 'Settimanale' },
-];
-
-const TIME_OPTIONS = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
 
 const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
@@ -81,28 +71,6 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
   const [avatarErr, setAvatarErr] = useState('');
   const fileRef = useRef();
 
-  const [notif, setNotif] = useState(() => getSettings());
-  const [notifPerm, setNotifPerm] = useState(() =>
-    'Notification' in window ? Notification.permission : 'unsupported'
-  );
-
-  const updateNotif = (patch) => {
-    const next = { ...notif, ...patch };
-    setNotif(next);
-    saveSettings(next);
-  };
-
-  const enableNotifications = async () => {
-    const perm = await requestPermission();
-    setNotifPerm(perm);
-    if (perm === 'granted') {
-      updateNotif({ enabled: true, frequency: notif.frequency || 1, time: notif.time || '08:00' });
-    }
-  };
-
-  const testNotification = async () => {
-    if (notifPerm === 'granted') await showReminder();
-  };
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
 
   const uploadAvatar = async (e) => {
@@ -226,77 +194,6 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
               <span className="info-row-key" style={{ color: 'rgba(255,255,255,0.4)' }}>📝 Note</span>
               <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{profile.nota}</span>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* PROMEMORIA NOTIFICHE */}
-      <div className="section-block">
-        <div className="section-title">PROMEMORIA PESATA</div>
-        <div className="notif-card">
-          {notifPerm === 'unsupported' ? (
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
-              Le notifiche non sono supportate su questo dispositivo.
-            </p>
-          ) : notifPerm === 'denied' ? (
-            <p style={{ color: '#FF4444', fontSize: '0.8rem' }}>
-              Notifiche bloccate. Abilitale dalle impostazioni del browser.
-            </p>
-          ) : (
-            <>
-              {/* Toggle attiva/disattiva */}
-              <div className="notif-row">
-                <span className="notif-row-lbl">Attiva promemoria</span>
-                {notifPerm !== 'granted' ? (
-                  <button className="btn-notif-enable" onClick={enableNotifications}>
-                    Abilita
-                  </button>
-                ) : (
-                  <div
-                    className={`ricordami-toggle ${notif.enabled ? 'ricordami-on' : ''}`}
-                    onClick={() => updateNotif({ enabled: !notif.enabled })}
-                  >
-                    <div className="ricordami-thumb" />
-                  </div>
-                )}
-              </div>
-
-              {notifPerm === 'granted' && notif.enabled && (
-                <>
-                  {/* Frequenza */}
-                  <div className="notif-section-lbl">Frequenza</div>
-                  <div className="notif-options">
-                    {FREQ_OPTIONS.map(o => (
-                      <button
-                        key={o.value}
-                        className={`notif-opt-btn ${(notif.frequency || 1) === o.value ? 'notif-opt-on' : ''}`}
-                        onClick={() => updateNotif({ frequency: o.value })}
-                      >
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Orario */}
-                  <div className="notif-section-lbl">Orario</div>
-                  <div className="notif-options notif-options-wrap">
-                    {TIME_OPTIONS.map(t => (
-                      <button
-                        key={t}
-                        className={`notif-opt-btn ${(notif.time || '08:00') === t ? 'notif-opt-on' : ''}`}
-                        onClick={() => updateNotif({ time: t })}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button className="btn-notif-test" onClick={testNotification}>
-                    Invia notifica di test
-                  </button>
-                </>
-              )}
-            </>
           )}
         </div>
       </div>
