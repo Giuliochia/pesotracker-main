@@ -113,10 +113,11 @@ export default function HomeTab({ profile, measurements }) {
           tdee,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || JSON.stringify(error));
+      if (data?.error) throw new Error(data.error);
       setDietPlan(data.plan);
-    } catch {
-      setDietErr('Errore nella generazione. Controlla la connessione e riprova.');
+    } catch (e) {
+      setDietErr(e?.message || 'Errore nella generazione. Controlla la connessione e riprova.');
     }
     setLoadingDiet(false);
   };
