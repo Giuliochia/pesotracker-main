@@ -26,6 +26,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
   const handlePhoto = e => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
   };

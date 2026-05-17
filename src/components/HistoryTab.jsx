@@ -405,30 +405,35 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
       )}
 
       {/* PHOTO COMPARE OVERLAY */}
-      {photoCompareOpen && selectedPhotos.length === 2 && (
-        <div className="overlay" style={{ zIndex: 200, alignItems: 'stretch', padding: 0 }} onClick={() => setPhotoCompareOpen(false)}>
-          <div className="photo-compare-screen" onClick={e => e.stopPropagation()}>
-            <div className="photo-compare-header">
-              <span className="photo-compare-title">CONFRONTO FOTO</span>
-              <button className="guide-close-btn" onClick={() => setPhotoCompareOpen(false)}>✕</button>
-            </div>
-            <div className="photo-compare-grid">
-              {selectedPhotos.map((p, i) => (
-                <div key={p.id} className="photo-compare-col">
-                  <div className={`photo-compare-label photo-compare-label-${i + 1}`}>
-                    {i === 0 ? 'PRIMA' : 'DOPO'}
+      {photoCompareOpen && selectedPhotos.length === 2 && (() => {
+        const [photoA, photoB] = selectedPhotos[0].date <= selectedPhotos[1].date
+          ? [selectedPhotos[0], selectedPhotos[1]]
+          : [selectedPhotos[1], selectedPhotos[0]];
+        return (
+          <div className="overlay" style={{ zIndex: 200, alignItems: 'stretch', padding: 0 }} onClick={() => setPhotoCompareOpen(false)}>
+            <div className="photo-compare-screen" onClick={e => e.stopPropagation()}>
+              <div className="photo-compare-header">
+                <span className="photo-compare-title">CONFRONTO FOTO</span>
+                <button className="guide-close-btn" onClick={() => setPhotoCompareOpen(false)}>✕</button>
+              </div>
+              <div className="photo-compare-grid">
+                {[photoA, photoB].map((p, i) => (
+                  <div key={p.id} className="photo-compare-col">
+                    <div className={`photo-compare-label photo-compare-label-${i + 1}`}>
+                      {i === 0 ? 'PRIMA' : 'DOPO'}
+                    </div>
+                    <img src={p.photo_url} alt="" className="photo-compare-img" />
+                    <div className="photo-compare-date">{fmtDate(p.date)}</div>
                   </div>
-                  <img src={p.photo_url} alt="" className="photo-compare-img" />
-                  <div className="photo-compare-date">{fmtDate(p.date)}</div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <button className="btn-outline" style={{ margin: '0 20px 24px' }} onClick={() => setPhotoCompareOpen(false)}>
+                Chiudi
+              </button>
             </div>
-            <button className="btn-outline" style={{ margin: '0 20px 24px' }} onClick={() => setPhotoCompareOpen(false)}>
-              Chiudi
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
