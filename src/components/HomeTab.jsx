@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import WeightChart from './WeightChart';
 import { supabase } from '../supabaseClient';
 import GuideModal from './GuideModal';
@@ -174,6 +175,16 @@ export default function HomeTab({ profile, measurements }) {
     typeof Notification !== 'undefined' ? Notification.permission === 'granted' : false
   );
   const [showBell, setShowBell] = useState(false);
+  const [weeklyAnalysis, setWeeklyAnalysis] = useState('');
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const confettiFired = useRef(false);
+
+  // Load cached weekly analysis
+  useEffect(() => {
+    const weekKey = `weekly_analysis_${getWeekKey()}`;
+    const cached = localStorage.getItem(weekKey);
+    if (cached) setWeeklyAnalysis(cached);
+  }, [profile.id]);
 
   // Load last saved diet plan
   useEffect(() => {
@@ -205,6 +216,29 @@ export default function HomeTab({ profile, measurements }) {
       });
     });
   }, [measurements]);
+
+  const getWeekKey = () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+    return `${now.getFullYear()}_w${week}`;
+  };
+
+  const generateAnalysis = async () => {
+    setLoadingAnalysis(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-analysis', {
+        body: { measurements, profile },
+      });
+      if (error) throw error;
+      const text = data?.analysis || '';
+      setWeeklyAnalysis(text);
+      localStorage.setItem(`weekly_analysis_${getWeekKey()}`, text);
+    } catch {
+      setWeeklyAnalysis('Errore nella generazione. Riprova più tardi.');
+    }
+    setLoadingAnalysis(false);
+  };
 
   const requestNotif = async () => {
     if (typeof Notification === 'undefined') return;
@@ -252,6 +286,20 @@ export default function HomeTab({ profile, measurements }) {
 
   const eta  = calcEta(profile.data_nascita);
   const tdee = calcTDEE(kg, altezza, eta, profile.sesso, profile.attivita);
+
+  // Goal prediction
+  const dailyRate = mediaGg > 0 ? +mediaGg : null;
+  const missingKg = kg - +profile.obiettivo_kg;
+  const daysToGoal = (dailyRate && missingKg > 0 && giorni > 2) ? Math.round(missingKg / dailyRate) : null;
+  const weeksToGoal = daysToGoal ? Math.ceil(daysToGoal / 7) : null;
+
+  // Confetti when goal reached
+  if (+pct >= 100 && !confettiFired.current) {
+    confettiFired.current = true;
+    setTimeout(() => {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ['#00FF41', '#ffffff', '#FFD700'] });
+    }, 400);
+  }
 
   const generateDiet = async (random = false) => {
     setLoadingDiet(true);
@@ -433,6 +481,47 @@ export default function HomeTab({ profile, measurements }) {
           <div className="mini-card-val">{mediaGg}</div>
           <div className="mini-card-lbl">Kg/giorno</div>
         </div>
+      </div>
+
+      {/* PREDIZIONE OBIETTIVO */}
+      {daysToGoal && (
+        <div className="card-neon predict-card">
+          <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>🎯</div>
+          <div className="predict-title">
+            {weeksToGoal <= 1
+              ? 'Sei vicinissimo al tuo obiettivo!'
+              : `Obiettivo raggiungibile in ~${weeksToGoal} settimane`}
+          </div>
+          <div className="predict-sub">
+            Al ritmo attuale di <strong>{mediaGg} kg/gg</strong> — ancora <strong>{missingKg.toFixed(1)} kg</strong> da perdere
+          </div>
+        </div>
+      )}
+
+      {/* ANALISI SETTIMANALE AI */}
+      <div className="card-neon weekly-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ fontSize: '1.2rem' }}>🧠</div>
+          <div>
+            <div className="card-label" style={{ marginBottom: 0 }}>ANALISI SETTIMANALE</div>
+            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Generata da AI · si aggiorna ogni settimana</div>
+          </div>
+        </div>
+        {loadingAnalysis && (
+          <div className="diet-loading"><div className="diet-spinner" /><span>Analisi in corso...</span></div>
+        )}
+        {!loadingAnalysis && weeklyAnalysis && (
+          <p className="weekly-text">{weeklyAnalysis}</p>
+        )}
+        {!loadingAnalysis && (
+          <button
+            className="btn-diet-regen"
+            onClick={generateAnalysis}
+            style={{ marginTop: weeklyAnalysis ? 12 : 0 }}
+          >
+            {weeklyAnalysis ? '↻ Rigenera analisi' : '✨ Genera analisi settimana'}
+          </button>
+        )}
       </div>
 
       {/* PIANO ALIMENTARE AI */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import BottomNav from './BottomNav';
 import HomeTab from './HomeTab';
@@ -18,6 +18,22 @@ export default function Dashboard({ user }) {
   const [loading, setLoading]             = useState(true);
   const [loadError, setLoadError]         = useState(false);
   const [showWhatsNew, setShowWhatsNew]   = useState(false);
+  const touchRef = useRef(null);
+  const TAB_ORDER = ['home', 'history', 'goals', 'profile'];
+
+  const handleTouchStart = (e) => {
+    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const handleTouchEnd = (e) => {
+    if (!touchRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchRef.current.y;
+    touchRef.current = null;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const idx = TAB_ORDER.indexOf(tab);
+    if (dx < 0 && idx < TAB_ORDER.length - 1) setTab(TAB_ORDER[idx + 1]);
+    if (dx > 0 && idx > 0) setTab(TAB_ORDER[idx - 1]);
+  };
 
   useEffect(() => { load(); }, [user]);
 
@@ -77,12 +93,13 @@ export default function Dashboard({ user }) {
   );
 
   return (
-    <div className="shell">
+    <div className="shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {tab === 'home'    && <HomeTab    profile={profile} measurements={measurements} />}
       {tab === 'history' && (
         <HistoryTab
           measurements={measurements}
           goalWeight={profile.obiettivo_kg}
+          altezza={+profile.altezza}
           bodyMeasurements={bodyMeasurements}
           bodyPhotos={bodyPhotos}
         />

@@ -17,7 +17,7 @@ function DeltaBadge({ a, b, unit = 'cm' }) {
   return <span style={{ color, fontWeight: 700, fontSize: '0.75rem' }}>{sign}{diff} {unit}</span>;
 }
 
-export default function HistoryTab({ measurements, goalWeight, bodyMeasurements = [], bodyPhotos = [] }) {
+export default function HistoryTab({ measurements, goalWeight, altezza = 0, bodyMeasurements = [], bodyPhotos = [] }) {
   const [bodyKey, setBodyKey] = useState('vita');
   const [lightbox, setLightbox] = useState(null);
   const [showChartOptions, setShowChartOptions] = useState({ avg: true, trend: true });
@@ -43,6 +43,10 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
     ? (measurements.reduce((s, m) => s + +m.weight, 0) / measurements.length).toFixed(1)
     : 0;
   const mediaGg = giorni > 0 ? (Math.abs(kgPersi) / giorni).toFixed(3) : 0;
+
+  const bmiHistory = altezza > 0
+    ? measurements.map(m => ({ date: m.date, value: +(+m.weight / ((altezza / 100) ** 2)).toFixed(1) }))
+    : [];
 
   const bodyChartData = bodyMeasurements
     .filter(b => b[bodyKey] != null)
@@ -136,6 +140,51 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
           <div className="stat-box">
             <div className="stat-val">{mediaGg} kg</div>
             <div className="stat-lbl">Media/giorno</div>
+          </div>
+        </div>
+      )}
+
+      {/* BMI HISTORY */}
+      {bmiHistory.length >= 2 && (
+        <div className="card-neon" style={{ marginBottom: 12 }}>
+          <div className="card-label" style={{ marginBottom: 12 }}>ANDAMENTO BMI</div>
+          <div style={{ position: 'relative', height: 90 }}>
+            <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none">
+              {(() => {
+                const vals = bmiHistory.map(b => b.value);
+                const minV = Math.min(...vals, 18.5) - 1;
+                const maxV = Math.max(...vals, 25) + 1;
+                const range = maxV - minV;
+                const toY = (v) => 82 - ((v - minV) / range) * 72;
+                const toX = (i) => (i / (vals.length - 1)) * 300;
+
+                // Zone bands
+                const zoneNormTop = toY(25), zoneNormBot = toY(18.5);
+                const points = vals.map((v, i) => `${toX(i)},${toY(v)}`).join(' ');
+                const lastBmi = vals[vals.length - 1];
+                const lineColor = lastBmi < 18.5 ? '#5352ED' : lastBmi < 25 ? '#00FF41' : lastBmi < 30 ? '#FFA502' : '#FF4444';
+
+                return (
+                  <>
+                    {/* Normal zone band */}
+                    <rect x="0" y={zoneNormTop} width="300" height={zoneNormBot - zoneNormTop} fill="rgba(0,255,65,0.06)" />
+                    <line x1="0" y1={zoneNormTop} x2="300" y2={zoneNormTop} stroke="rgba(0,255,65,0.2)" strokeWidth="1" strokeDasharray="4,4" />
+                    <line x1="0" y1={zoneNormBot} x2="300" y2={zoneNormBot} stroke="rgba(0,255,65,0.2)" strokeWidth="1" strokeDasharray="4,4" />
+                    <polyline points={points} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    {vals.map((v, i) => (
+                      <circle key={i} cx={toX(i)} cy={toY(v)} r="3" fill={lineColor} />
+                    ))}
+                  </>
+                );
+              })()}
+            </svg>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{fmtDateShort(bmiHistory[0].date)}</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>
+              Zona verde = normopeso (18.5–25)
+            </span>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{fmtDateShort(bmiHistory[bmiHistory.length - 1].date)}</span>
           </div>
         </div>
       )}
