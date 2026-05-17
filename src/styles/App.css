@@ -1768,3 +1768,96 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-color: rgba(0,255,65,0.6);
   color: #00FF41;
 }
+
+/* ═══════════════════════════════════════════════
+   DIET AI CARD
+═══════════════════════════════════════════════ */
+.diet-card {
+  margin-bottom: 12px;
+}
+.btn-diet-generate {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(0,255,65,0.12), rgba(83,82,237,0.12));
+  border: 1px solid rgba(0,255,65,0.3);
+  border-radius: 12px;
+  color: #00FF41;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-diet-generate:active {
+  background: linear-gradient(135deg, rgba(0,255,65,0.2), rgba(83,82,237,0.2));
+}
+.btn-diet-regen {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.75rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-diet-regen:active {
+  color: #fff;
+  border-color: rgba(255,255,255,0.3);
+}
+.diet-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem;
+}
+.diet-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0,255,65,0.2);
+  border-top-color: #00FF41;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.diet-plan-text {
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.diet-section-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #00FF41;
+  margin: 14px 0 6px;
+  text-transform: uppercase;
+}
+.diet-section-title:first-child {
+  margin-top: 0;
+}
+.diet-bold {
+  font-weight: 700;
+  color: #fff;
+  margin: 4px 0;
+}
+.diet-item {
+  color: rgba(255,255,255,0.75);
+  padding: 2px 0 2px 4px;
+  border-left: 2px solid rgba(0,255,65,0.2);
+  margin: 3px 0;
+  padding-left: 10px;
+}
+.diet-line {
+  color: rgba(255,255,255,0.6);
+}

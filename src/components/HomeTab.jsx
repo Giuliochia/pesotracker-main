@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import WeightChart from './WeightChart';
-import { getSettings, saveSettings, requestPermission, showReminder } from '../utils/notifications';
-
-const FREQ_OPTIONS = [
-  { value: 1, label: 'Ogni giorno' },
-  { value: 2, label: 'Ogni 2 gg' },
-  { value: 3, label: 'Ogni 3 gg' },
-  { value: 7, label: 'Settimanale' },
-];
-const TIME_OPTIONS = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '18:00', '20:00'];
+import { supabase } from '../supabaseClient';
 
 const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
@@ -19,38 +11,52 @@ const BMI_INFO = b =>
 const fmtDateShort = d =>
   new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
 
-// Check if two dates are consecutive days
 const isYesterday = (dateA, dateB) => {
   const a = new Date(dateA); a.setHours(0,0,0,0);
   const b = new Date(dateB); b.setHours(0,0,0,0);
-  return Math.abs(a - b) <= 86400000 * 2; // within 2 days for flexibility
+  return Math.abs(a - b) <= 86400000 * 2;
 };
+
+function calcEta(dataNascita) {
+  if (!dataNascita) return null;
+  const oggi = new Date();
+  const nasc = new Date(dataNascita);
+  let eta = oggi.getFullYear() - nasc.getFullYear();
+  const m = oggi.getMonth() - nasc.getMonth();
+  if (m < 0 || (m === 0 && oggi.getDate() < nasc.getDate())) eta--;
+  return eta;
+}
+
+function calcTDEE(peso, altezza, eta, sesso, attivita) {
+  if (!eta || !sesso || !peso || !altezza) return null;
+  const bmr = sesso === 'F'
+    ? 10 * peso + 6.25 * altezza - 5 * eta - 161
+    : 10 * peso + 6.25 * altezza - 5 * eta + 5;
+  const mult = { sedentario: 1.2, leggero: 1.375, moderato: 1.55, attivo: 1.725, estremo: 1.9 };
+  return Math.round(bmr * (mult[attivita] || 1.55));
+}
+
+// Renders the AI diet plan (simple markdown-like formatting)
+function DietPlanView({ plan }) {
+  const lines = plan.split('\n');
+  return (
+    <div className="diet-plan-text">
+      {lines.map((line, i) => {
+        if (line.startsWith('## ')) return <div key={i} className="diet-section-title">{line.slice(3)}</div>;
+        if (line.startsWith('**') && line.endsWith('**')) return <div key={i} className="diet-bold">{line.slice(2, -2)}</div>;
+        if (line.startsWith('- ')) return <div key={i} className="diet-item">• {line.slice(2)}</div>;
+        if (line.trim() === '') return <div key={i} style={{ height: 8 }} />;
+        return <div key={i} className="diet-line">{line}</div>;
+      })}
+    </div>
+  );
+}
 
 export default function HomeTab({ profile, measurements }) {
   const [chartDays, setChartDays] = useState(7);
-  const [showNotif, setShowNotif] = useState(false);
-  const [notif, setNotif] = useState(() => getSettings());
-  const [notifPerm, setNotifPerm] = useState(() =>
-    'Notification' in window ? Notification.permission : 'unsupported'
-  );
-
-  const updateNotif = patch => {
-    const next = { ...notif, ...patch };
-    setNotif(next);
-    saveSettings(next);
-  };
-
-  const enableNotifications = async () => {
-    const perm = await requestPermission();
-    setNotifPerm(perm);
-    if (perm === 'granted') {
-      updateNotif({ enabled: true, frequency: notif.frequency || 1, time: notif.time || '08:00' });
-    }
-  };
-
-  const testNotification = async () => {
-    if (notifPerm === 'granted') await showReminder();
-  };
+  const [dietPlan, setDietPlan] = useState(null);
+  const [loadingDiet, setLoadingDiet] = useState(false);
+  const [dietErr, setDietErr] = useState('');
 
   const last  = measurements.at(-1);
   const prev  = measurements.at(-2);
@@ -61,11 +67,8 @@ export default function HomeTab({ profile, measurements }) {
     ? isYesterday(last.date, prev.date) ? 'rispetto a ieri' : 'dalla misura precedente'
     : null;
 
-  // Guard: avoid BMI division by zero
   const altezza = +profile.altezza;
-  const bmiVal  = altezza > 0
-    ? (kg / ((altezza / 100) ** 2)).toFixed(1)
-    : '—';
+  const bmiVal  = altezza > 0 ? (kg / ((altezza / 100) ** 2)).toFixed(1) : '—';
   const bmi = altezza > 0 ? BMI_INFO(+bmiVal) : { lbl: '—', color: '#fff' };
 
   const diff    = +profile.peso_iniziale - +profile.obiettivo_kg;
@@ -89,6 +92,33 @@ export default function HomeTab({ profile, measurements }) {
   const chartData  = measurements.slice(-chartDays);
   const ultimeMis  = [...measurements].reverse().slice(0, 5);
 
+  const eta  = calcEta(profile.data_nascita);
+  const tdee = calcTDEE(kg, altezza, eta, profile.sesso, profile.attivita);
+
+  const generateDiet = async () => {
+    setLoadingDiet(true);
+    setDietErr('');
+    try {
+      const { data, error } = await supabase.functions.invoke('diet-advice', {
+        body: {
+          peso: kg,
+          peso_obiettivo: +profile.obiettivo_kg,
+          altezza,
+          sesso: profile.sesso || null,
+          eta,
+          obiettivo: profile.obiettivo_tipo || 'dimagrire',
+          attivita: profile.attivita || 'moderato',
+          tdee,
+        },
+      });
+      if (error) throw error;
+      setDietPlan(data.plan);
+    } catch {
+      setDietErr('Errore nella generazione. Controlla la connessione e riprova.');
+    }
+    setLoadingDiet(false);
+  };
+
   return (
     <div className="pg">
       {/* HEADER */}
@@ -105,77 +135,7 @@ export default function HomeTab({ profile, measurements }) {
             <span className="home-logo-text">PESO TRACKER</span>
           </span>
         </div>
-        <button className="home-bell" onClick={() => setShowNotif(v => !v)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={notif.enabled ? '#00FF41' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          {notif.enabled && <span className="home-bell-dot" />}
-        </button>
       </div>
-
-      {/* PANNELLO NOTIFICHE */}
-      {showNotif && (
-        <div className="notif-panel">
-          <div className="notif-panel-title">PROMEMORIA PESATA</div>
-          {notifPerm === 'unsupported' ? (
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0 }}>
-              Le notifiche non sono supportate su questo dispositivo.
-            </p>
-          ) : notifPerm === 'denied' ? (
-            <p style={{ color: '#FF4444', fontSize: '0.8rem', margin: 0 }}>
-              Notifiche bloccate. Abilitale dalle impostazioni del browser.
-            </p>
-          ) : (
-            <>
-              <div className="notif-row">
-                <span className="notif-row-lbl">Attiva promemoria</span>
-                {notifPerm !== 'granted' ? (
-                  <button className="btn-notif-enable" onClick={enableNotifications}>Abilita</button>
-                ) : (
-                  <div
-                    className={`ricordami-toggle ${notif.enabled ? 'ricordami-on' : ''}`}
-                    onClick={() => updateNotif({ enabled: !notif.enabled })}
-                  >
-                    <div className="ricordami-thumb" />
-                  </div>
-                )}
-              </div>
-              {notifPerm === 'granted' && notif.enabled && (
-                <>
-                  <div className="notif-section-lbl">Frequenza</div>
-                  <div className="notif-options">
-                    {FREQ_OPTIONS.map(o => (
-                      <button
-                        key={o.value}
-                        className={`notif-opt-btn ${(notif.frequency || 1) === o.value ? 'notif-opt-on' : ''}`}
-                        onClick={() => updateNotif({ frequency: o.value })}
-                      >
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="notif-section-lbl">Orario</div>
-                  <div className="notif-options notif-options-wrap">
-                    {TIME_OPTIONS.map(t => (
-                      <button
-                        key={t}
-                        className={`notif-opt-btn ${(notif.time || '08:00') === t ? 'notif-opt-on' : ''}`}
-                        onClick={() => updateNotif({ time: t })}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                  <button className="btn-notif-test" onClick={testNotification}>
-                    Invia notifica di test
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
 
       {/* GREETING */}
       <div className="home-greeting">
@@ -212,7 +172,7 @@ export default function HomeTab({ profile, measurements }) {
       {/* DUE CARD: BMI + PROGRESSO */}
       <div className="home-two-col home-two-col-asym">
         <div className="card-neon card-bmi">
-          <div className="card-label">BMI</div>
+          <div className="card-label">BMI{profile.sesso ? ` · ${profile.sesso === 'M' ? '♂' : '♀'}` : ''}</div>
           <div className="card-big-num" style={{ fontSize: '2.2rem' }}>{bmiVal}</div>
           <div style={{ color: bmi.color, fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
             {bmi.lbl}
@@ -286,6 +246,52 @@ export default function HomeTab({ profile, measurements }) {
           <div className="mini-card-val">{mediaGg}</div>
           <div className="mini-card-lbl">Kg/giorno</div>
         </div>
+      </div>
+
+      {/* PIANO ALIMENTARE AI */}
+      <div className="card-neon diet-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ fontSize: '1.3rem' }}>🥗</div>
+          <div>
+            <div className="card-label" style={{ marginBottom: 0 }}>PIANO ALIMENTARE</div>
+            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+              Personalizzato da AI · {profile.sesso === 'M' ? 'Uomo' : profile.sesso === 'F' ? 'Donna' : 'Profilo'}{tdee ? ` · ${tdee} kcal/gg` : ''}
+            </div>
+          </div>
+        </div>
+
+        {!dietPlan && !loadingDiet && (
+          <button className="btn-diet-generate" onClick={generateDiet}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/><path d="M18 2v4h4"/>
+            </svg>
+            Genera il mio piano alimentare
+          </button>
+        )}
+
+        {loadingDiet && (
+          <div className="diet-loading">
+            <div className="diet-spinner" />
+            <span>L&apos;AI sta preparando il tuo piano...</span>
+          </div>
+        )}
+
+        {dietErr && (
+          <div style={{ color: '#FF4444', fontSize: '0.78rem', marginBottom: 10 }}>{dietErr}</div>
+        )}
+
+        {dietPlan && (
+          <>
+            <DietPlanView plan={dietPlan} />
+            <button
+              className="btn-diet-regen"
+              onClick={() => { setDietPlan(null); setDietErr(''); }}
+              style={{ marginTop: 14 }}
+            >
+              Rigenera piano
+            </button>
+          </>
+        )}
       </div>
 
       {/* ULTIME MISURAZIONI */}
