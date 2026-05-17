@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WeightChart from './WeightChart';
 import { supabase } from '../supabaseClient';
 import GuideModal from './GuideModal';
@@ -59,6 +59,50 @@ export default function HomeTab({ profile, measurements }) {
   const [dietPlan, setDietPlan] = useState(null);
   const [loadingDiet, setLoadingDiet] = useState(false);
   const [dietErr, setDietErr] = useState('');
+  const [notifGranted, setNotifGranted] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission === 'granted' : false
+  );
+
+  // Load last saved diet plan
+  useEffect(() => {
+    supabase
+      .from('diet_plans')
+      .select('plan')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => { if (data?.plan) setDietPlan(data.plan); });
+  }, [profile.id]);
+
+  // Show local notification if measurement overdue
+  useEffect(() => {
+    if (!measurements.length || Notification.permission !== 'granted') return;
+    const last = measurements.at(-1);
+    const diffH = (Date.now() - new Date(last.date)) / 3600000;
+    if (diffH < 30) return;
+    const todayKey = `notif_shown_${new Date().toDateString()}`;
+    if (localStorage.getItem(todayKey)) return;
+    localStorage.setItem(todayKey, '1');
+    navigator.serviceWorker?.ready.then(sw => {
+      sw.showNotification('Peso Tracker 💪', {
+        body: 'Non ti sei pesato di recente! Aggiungi la tua misurazione di oggi.',
+        icon: '/logo.png',
+        badge: '/logo.png',
+        tag: 'peso-reminder',
+      });
+    });
+  }, [measurements]);
+
+  const requestNotif = async () => {
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission === 'granted') {
+      setNotifGranted(true);
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    setNotifGranted(perm === 'granted');
+  };
 
   const last  = measurements.at(-1);
   const prev  = measurements.at(-2);
@@ -116,6 +160,7 @@ export default function HomeTab({ profile, measurements }) {
       if (error) throw new Error(error.message || JSON.stringify(error));
       if (data?.error) throw new Error(data.error);
       setDietPlan(data.plan);
+      supabase.from('diet_plans').insert([{ user_id: profile.id, plan: data.plan }]);
     } catch (e) {
       setDietErr(e?.message || 'Errore nella generazione. Controlla la connessione e riprova.');
     }
@@ -138,6 +183,14 @@ export default function HomeTab({ profile, measurements }) {
             <span className="home-logo-text">PESO TRACKER</span>
           </span>
         </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+        <button className="home-bell" onClick={requestNotif} title="Notifiche">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {notifGranted && <span className="home-bell-dot" />}
+        </button>
         <button className="home-guide-btn" onClick={() => setShowGuide(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
@@ -145,6 +198,7 @@ export default function HomeTab({ profile, measurements }) {
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </button>
+        </div>
       </div>
 
       {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
