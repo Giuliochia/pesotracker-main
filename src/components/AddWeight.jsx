@@ -104,7 +104,6 @@ export default function AddWeight({ onClose, onSaved, userId }) {
               value={w}
               onChange={e => { setW(e.target.value); setErr(''); }}
               onKeyDown={handleKey}
-              autoFocus
             />
           </div>
           <div className="field">

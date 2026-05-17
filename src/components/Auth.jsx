@@ -7,6 +7,8 @@ export default function Auth({ setUser }) {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [ricordami, setRicordami] = useState(true);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
 
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
 
@@ -22,6 +24,17 @@ export default function Auth({ setUser }) {
       sessionStorage.removeItem('pt_no_persist');
     }
     setUser(data.user);
+  };
+
+  const sendReset = async () => {
+    if (!resetEmail) return setErr('Inserisci la tua email.');
+    setErr(''); setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: window.location.origin,
+    });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setResetSent(true);
   };
 
   const register = async () => {
@@ -67,13 +80,13 @@ export default function Auth({ setUser }) {
         <div className="auth-tabs">
           <button
             className={`auth-tab ${tab === 'login' ? 'auth-tab-on' : ''}`}
-            onClick={() => { setTab('login'); setErr(''); }}
+            onClick={() => { setTab('login'); setErr(''); setResetSent(false); }}
           >
             Login
           </button>
           <button
             className={`auth-tab ${tab === 'register' ? 'auth-tab-on' : ''}`}
-            onClick={() => { setTab('register'); setErr(''); }}
+            onClick={() => { setTab('register'); setErr(''); setResetSent(false); }}
           >
             Registrati
           </button>
@@ -102,6 +115,54 @@ export default function Auth({ setUser }) {
             <button className="btn-g" onClick={login} disabled={busy}>
               {busy ? 'Accesso in corso...' : 'ACCEDI'}
             </button>
+            <button
+              type="button"
+              className="auth-forgot-btn"
+              onClick={() => { setTab('reset'); setErr(''); setResetSent(false); setResetEmail(f.email); }}
+            >
+              Password dimenticata?
+            </button>
+          </div>
+        ) : tab === 'reset' ? (
+          <div className="form-stack">
+            {resetSent ? (
+              <div className="auth-reset-sent">
+                <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: 12 }}>📧</div>
+                <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  Email inviata! Controlla la tua casella di posta e clicca il link per reimpostare la password.
+                </p>
+                <button className="btn-g" style={{ marginTop: 16 }} onClick={() => { setTab('login'); setResetSent(false); }}>
+                  TORNA AL LOGIN
+                </button>
+              </div>
+            ) : (
+              <>
+                <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                  Inserisci la tua email. Ti invieremo un link per reimpostare la password.
+                </p>
+                <div className="field">
+                  <label className="field-lbl">Email</label>
+                  <input
+                    className="inp"
+                    type="email"
+                    placeholder="tuo@email.com"
+                    value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)}
+                  />
+                </div>
+                {err && <p className="err">{err}</p>}
+                <button className="btn-g" onClick={sendReset} disabled={busy}>
+                  {busy ? 'Invio in corso...' : 'INVIA LINK RESET'}
+                </button>
+                <button
+                  type="button"
+                  className="auth-forgot-btn"
+                  onClick={() => { setTab('login'); setErr(''); }}
+                >
+                  Torna al login
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="form-stack">
