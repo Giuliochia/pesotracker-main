@@ -1906,6 +1906,88 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 .home-guide-btn:active { color: #00FF41; border-color: rgba(0,255,65,0.4); }
 
+/* ── WhatsNew modal ── */
+.wnew-modal {
+  background: var(--bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 36px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wnew-header {
+  text-align: center;
+  padding: 8px 0 20px;
+}
+.wnew-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #00FF41, #00cc33);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+.wnew-title {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.wnew-sub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+}
+.wnew-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 4px;
+}
+.wnew-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.wnew-item-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,255,65,0.07);
+  border-radius: 10px;
+  border: 1px solid rgba(0,255,65,0.12);
+}
+.wnew-item-text {
+  flex: 1;
+}
+.wnew-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.wnew-item-body {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+}
+.wnew-btn {
+  margin-top: 20px;
+  flex-shrink: 0;
+}
+
 .guide-modal {
   background: var(--bg);
   border: 1px solid var(--card-border);

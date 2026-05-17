@@ -6,6 +6,7 @@ import HistoryTab from './HistoryTab';
 import GoalsTab from './GoalsTab';
 import ProfileTab from './ProfileTab';
 import AddWeight from './AddWeight';
+import WhatsNewModal, { shouldShowWhatsNew } from './WhatsNewModal';
 
 export default function Dashboard({ user }) {
   const [profile, setProfile]             = useState(null);
@@ -16,6 +17,7 @@ export default function Dashboard({ user }) {
   const [showAdd, setShowAdd]             = useState(false);
   const [loading, setLoading]             = useState(true);
   const [loadError, setLoadError]         = useState(false);
+  const [showWhatsNew, setShowWhatsNew]   = useState(false);
 
   useEffect(() => { load(); }, [user]);
 
@@ -37,6 +39,7 @@ export default function Dashboard({ user }) {
       setBodyMeas(bm || []);
       setBodyPhotos(bp || []);
       setLoading(false);
+      if (shouldShowWhatsNew()) setTimeout(() => setShowWhatsNew(true), 600);
     } catch {
       if (tries > 0) {
         await new Promise(r => setTimeout(r, 800));
@@ -95,6 +98,8 @@ export default function Dashboard({ user }) {
       )}
 
       <BottomNav active={tab} go={setTab} onAdd={() => setShowAdd(true)} />
+
+      {showWhatsNew && <WhatsNewModal onClose={() => setShowWhatsNew(false)} />}
 
       {showAdd && (
         <AddWeight
