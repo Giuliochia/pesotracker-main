@@ -58,9 +58,14 @@ const CHANGELOG = [
     date: 'Maggio 2026',
     badge: 'NUOVO',
     items: [
-      '🥗 Piano alimentare AI personalizzato (Claude AI)',
-      '♂️♀️ Selezione genere per dati più accurati',
-      '🖼️ Selezione foto da galleria oltre che fotocamera',
+      '🥗 Piano alimentare AI personalizzato (powered by Groq/Llama)',
+      '💾 Piano alimentare salvato automaticamente — non devi rigenerarlo ad ogni accesso',
+      '🔔 Campanella notifiche — promemoria pesata se non ti misuri da oltre 30 ore',
+      '♂️♀️ Selezione genere per BMI e TDEE più accurati',
+      '🖼️ Aggiungi foto da galleria, cloud o fotocamera',
+      '🔁 Confronto foto PRIMA/DOPO e misure corporee nel tab Storico',
+      '❓ Guida integrata con tutorial, novità e consigli',
+      '🔑 Recupero password direttamente dalla schermata di login',
     ],
   },
   {
@@ -70,7 +75,6 @@ const CHANGELOG = [
       '📈 Grafici avanzati con media mobile e trend lineare',
       '📏 Misure corporee (vita, fianchi, petto, braccia)',
       '📸 Foto corporee progress con lightbox',
-      '🔔 Promemoria pesata con notifiche',
     ],
   },
   {
