@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const DIET_TYPES = [
   { value: '', label: 'Nessuna restrizione' },
@@ -25,7 +26,7 @@ export default function BellModal({ onClose, notifGranted, onRequestNotif }) {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={onClose} style={{ zIndex: 300, alignItems: 'flex-end' }}>
       <div className="guide-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-handle" />
@@ -130,6 +131,7 @@ export default function BellModal({ onClose, notifGranted, onRequestNotif }) {
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

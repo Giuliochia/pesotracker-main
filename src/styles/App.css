@@ -1884,6 +1884,119 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: rgba(255,255,255,0.6);
 }
 
+/* Diet plan — structured day view */
+.diet-day-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+.diet-day-tabs::-webkit-scrollbar { display: none; }
+.diet-day-tab {
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.diet-day-tab-on {
+  background: rgba(0,255,65,0.12);
+  border-color: rgba(0,255,65,0.35);
+  color: #00FF41;
+}
+.diet-day-name {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.diet-meal-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.diet-meal-total {
+  background: rgba(0,255,65,0.05);
+  border-color: rgba(0,255,65,0.12);
+  margin-top: 4px;
+}
+.diet-meal-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  margin-top: 2px;
+}
+.diet-meal-content {
+  flex: 1;
+  min-width: 0;
+}
+.diet-meal-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+.diet-meal-total .diet-meal-label { color: rgba(0,255,65,0.6); }
+.diet-meal-text {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.5;
+}
+.diet-meal-total .diet-meal-text {
+  color: #00FF41;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.diet-tips-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.diet-tips-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.diet-tip-item {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 5px;
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.55;
+}
+.diet-tip-item::before {
+  content: '·';
+  position: absolute;
+  left: 2px;
+  color: rgba(0,255,65,0.5);
+}
+
 /* ═══════════════════════════════════════════════
    GUIDE MODAL
 ═══════════════════════════════════════════════ */

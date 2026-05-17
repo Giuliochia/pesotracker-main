@@ -38,18 +38,95 @@ function calcTDEE(peso, altezza, eta, sesso, attivita) {
   return Math.round(bmr * (mult[attivita] || 1.55));
 }
 
-// Renders the AI diet plan (simple markdown-like formatting)
+const MEAL_ICONS = {
+  'Colazione': '☀️',
+  'Spuntino mattina': '🍎',
+  'Spuntino': '🍎',
+  'Pranzo': '🍽️',
+  'Merenda': '🥜',
+  'Spuntino pomeriggio': '🍊',
+  'Cena': '🌙',
+  'Totale': '⚡',
+};
+const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+
+function parseDietPlan(plan) {
+  const days = [];
+  const tips = [];
+  let currentDay = null;
+  let inTips = false;
+  plan.split('\n').forEach(line => {
+    const t = line.trim();
+    if (!t) return;
+    if (t.startsWith('## Consigli')) {
+      if (currentDay) { days.push(currentDay); currentDay = null; }
+      inTips = true; return;
+    }
+    if (t.startsWith('## ')) {
+      if (currentDay) days.push(currentDay);
+      currentDay = { name: t.slice(3), meals: [] };
+      inTips = false; return;
+    }
+    if (inTips && t.startsWith('- ')) { tips.push(t.slice(2)); return; }
+    const m = t.match(/^\*\*(.+?):\*\*\s*(.+)$/);
+    if (m && currentDay) currentDay.meals.push({ label: m[1], content: m[2] });
+  });
+  if (currentDay) days.push(currentDay);
+  return { days, tips };
+}
+
 function DietPlanView({ plan }) {
-  const lines = plan.split('\n');
+  const [dayIdx, setDayIdx] = React.useState(0);
+  const { days, tips } = parseDietPlan(plan);
+
+  if (!days.length) {
+    return <div className="diet-plan-text" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>{plan}</div>;
+  }
+
+  const day = days[Math.min(dayIdx, days.length - 1)];
+
   return (
-    <div className="diet-plan-text">
-      {lines.map((line, i) => {
-        if (line.startsWith('## ')) return <div key={i} className="diet-section-title">{line.slice(3)}</div>;
-        if (line.startsWith('**') && line.endsWith('**')) return <div key={i} className="diet-bold">{line.slice(2, -2)}</div>;
-        if (line.startsWith('- ')) return <div key={i} className="diet-item">• {line.slice(2)}</div>;
-        if (line.trim() === '') return <div key={i} style={{ height: 8 }} />;
-        return <div key={i} className="diet-line">{line}</div>;
+    <div>
+      {/* Day tabs */}
+      <div className="diet-day-tabs">
+        {days.map((d, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`diet-day-tab ${dayIdx === i ? 'diet-day-tab-on' : ''}`}
+            onClick={() => setDayIdx(i)}
+          >
+            {DAY_SHORT[i] || d.name.slice(0, 3)}
+          </button>
+        ))}
+      </div>
+
+      {/* Day name */}
+      <div className="diet-day-name">{day.name}</div>
+
+      {/* Meals */}
+      {day.meals.map((meal, i) => {
+        const isTotal = meal.label === 'Totale';
+        return (
+          <div key={i} className={`diet-meal-row${isTotal ? ' diet-meal-total' : ''}`}>
+            <span className="diet-meal-icon">{MEAL_ICONS[meal.label] || (isTotal ? '⚡' : '•')}</span>
+            <div className="diet-meal-content">
+              <span className="diet-meal-label">{meal.label}</span>
+              <span className="diet-meal-text">{meal.content}</span>
+            </div>
+          </div>
+        );
       })}
+
+      {/* Tips */}
+      {tips.length > 0 && (
+        <div className="diet-tips-box">
+          <div className="diet-tips-title">💡 Consigli</div>
+          {tips.map((tip, i) => (
+            <div key={i} className="diet-tip-item">{tip}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
