@@ -5,25 +5,36 @@ const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
   b < 25   ? { lbl: 'Normopeso', color: '#00FF41' } :
   b < 30   ? { lbl: 'Sovrappeso', color: '#FFA502' } :
-             { lbl: 'Obesita\'', color: '#FF4444' };
-
-const fmtDate = d =>
-  new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+             { lbl: 'Obesità',   color: '#FF4444' };
 
 const fmtDateShort = d =>
   new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
 
+// Check if two dates are consecutive days
+const isYesterday = (dateA, dateB) => {
+  const a = new Date(dateA); a.setHours(0,0,0,0);
+  const b = new Date(dateB); b.setHours(0,0,0,0);
+  return Math.abs(a - b) <= 86400000 * 2; // within 2 days for flexibility
+};
+
 export default function HomeTab({ profile, measurements }) {
   const [chartDays, setChartDays] = useState(7);
 
-  const last   = measurements.at(-1);
-  const prev   = measurements.at(-2);
-  const kg     = last ? +last.weight : +profile.peso_iniziale;
-  const kgP    = prev ? +prev.weight : null;
-  const delta  = kgP !== null ? (kg - kgP).toFixed(1) : null;
+  const last  = measurements.at(-1);
+  const prev  = measurements.at(-2);
+  const kg    = last ? +last.weight : +profile.peso_iniziale;
+  const kgP   = prev ? +prev.weight : null;
+  const delta = kgP !== null ? (kg - kgP).toFixed(1) : null;
+  const deltaLabel = prev && last
+    ? isYesterday(last.date, prev.date) ? 'rispetto a ieri' : 'dalla misura precedente'
+    : null;
 
-  const bmiVal = (kg / ((+profile.altezza / 100) ** 2)).toFixed(1);
-  const bmi    = BMI_INFO(+bmiVal);
+  // Guard: avoid BMI division by zero
+  const altezza = +profile.altezza;
+  const bmiVal  = altezza > 0
+    ? (kg / ((altezza / 100) ** 2)).toFixed(1)
+    : '—';
+  const bmi = altezza > 0 ? BMI_INFO(+bmiVal) : { lbl: '—', color: '#fff' };
 
   const diff    = +profile.peso_iniziale - +profile.obiettivo_kg;
   const done    = +profile.peso_iniziale - kg;
@@ -38,15 +49,13 @@ export default function HomeTab({ profile, measurements }) {
     ? Math.round((new Date(measurements.at(-1).date) - new Date(measurements[0].date)) / 86400000)
     : 0;
 
-  const mediaGg = giorni > 0
+  const mediaGg = giorni > 0 && done !== 0
     ? (Math.abs(done) / giorni).toFixed(3)
-    : 0;
+    : '0.000';
 
   const persiTot = done > 0 ? done.toFixed(1) : 0;
-
-  const chartData = measurements.slice(-chartDays);
-
-  const ultimeMis = [...measurements].reverse().slice(0, 5);
+  const chartData  = measurements.slice(-chartDays);
+  const ultimeMis  = [...measurements].reverse().slice(0, 5);
 
   return (
     <div className="pg">
@@ -89,7 +98,7 @@ export default function HomeTab({ profile, measurements }) {
           <div className="card-big-num">{kg.toFixed(1)}<span className="card-unit"> kg</span></div>
           {delta !== null ? (
             <div className="card-delta" style={{ color: +delta > 0 ? '#FF4444' : '#00FF41' }}>
-              {+delta > 0 ? `▲ +${delta}` : `▼ ${delta}`} kg rispetto a ieri
+              {+delta > 0 ? `▲ +${delta}` : `▼ ${delta}`} kg {deltaLabel}
             </div>
           ) : (
             <div className="card-delta" style={{ color: 'rgba(255,255,255,0.3)' }}>Prima misurazione</div>
@@ -100,14 +109,13 @@ export default function HomeTab({ profile, measurements }) {
           <div className="card-big-num">{(+profile.obiettivo_kg).toFixed(1)}<span className="card-unit"> kg</span></div>
           <div style={{ fontSize: '1.2rem', marginTop: 4, marginBottom: 2 }}>🎯</div>
           <div className="card-delta" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            {+missing > 0 ? `-${missing} kg mancanti` : 'Raggiunto!'}
+            {+missing > 0 ? `-${missing} kg mancanti` : '🏆 Raggiunto!'}
           </div>
         </div>
       </div>
 
       {/* DUE CARD: BMI + PROGRESSO */}
       <div className="home-two-col home-two-col-asym">
-        {/* BMI */}
         <div className="card-neon card-bmi">
           <div className="card-label">BMI</div>
           <div className="card-big-num" style={{ fontSize: '2.2rem' }}>{bmiVal}</div>
@@ -125,7 +133,6 @@ export default function HomeTab({ profile, measurements }) {
             </svg>
           </div>
         </div>
-        {/* PROGRESSO */}
         <div className="card-neon card-progress">
           <div className="card-label">PROGRESSO</div>
           <div className="card-big-num" style={{ color: '#00FF41', fontSize: '2.4rem' }}>{pct}%</div>
@@ -172,12 +179,12 @@ export default function HomeTab({ profile, measurements }) {
         <div className="mini-card">
           <div className="mini-card-icon">📅</div>
           <div className="mini-card-val">{giorni}</div>
-          <div className="mini-card-lbl">Giorni tracking</div>
+          <div className="mini-card-lbl">Giorni</div>
         </div>
         <div className="mini-card">
           <div className="mini-card-icon">📊</div>
           <div className="mini-card-val">{medio}</div>
-          <div className="mini-card-lbl">Peso medio</div>
+          <div className="mini-card-lbl">Media kg</div>
         </div>
         <div className="mini-card">
           <div className="mini-card-icon">⚡</div>

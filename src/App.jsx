@@ -3,8 +3,25 @@ import { supabase } from './supabaseClient';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { crashed: false }; }
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) return (
+      <div className="splash">
+        <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
+        <div style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 20, textAlign: 'center', padding: '0 24px' }}>
+          Qualcosa è andato storto. Ricarica l&apos;app.
+        </div>
+        <button className="btn-exit-sm" onClick={() => window.location.reload()}>RICARICA</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,5 +45,9 @@ export default function App() {
     </div>
   );
 
-  return user ? <Dashboard user={user} /> : <Auth setUser={setUser} />;
+  return (
+    <ErrorBoundary>
+      {user ? <Dashboard user={user} /> : <Auth setUser={setUser} />}
+    </ErrorBoundary>
+  );
 }

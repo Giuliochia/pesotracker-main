@@ -2,23 +2,29 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function AddWeight({ onClose, onSaved, userId }) {
-  const [w, setW] = useState('');
+  const [w, setW]       = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [err, setErr] = useState('');
+  const [err, setErr]   = useState('');
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
-    if (!w || +w <= 0) return setErr('Inserisci un peso valido.');
+    const num = parseFloat(w);
+    if (!w || isNaN(num) || num <= 0 || num > 500)
+      return setErr('Inserisci un peso valido (es. 78.5).');
     setBusy(true);
+    // Use T12:00:00Z to avoid timezone day-shift issues
+    const isoDate = `${date}T12:00:00.000Z`;
     const { data, error } = await supabase
       .from('measurements')
-      .insert([{ user_id: userId, weight: +w, date: new Date(date).toISOString() }])
+      .insert([{ user_id: userId, weight: num, date: isoDate }])
       .select()
       .single();
     setBusy(false);
     if (error) return setErr(error.message);
     onSaved(data);
   };
+
+  const handleKey = e => { if (e.key === 'Enter') save(); };
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -38,9 +44,12 @@ export default function AddWeight({ onClose, onSaved, userId }) {
               className="inp"
               type="number"
               step=".1"
+              min="20"
+              max="500"
               placeholder="es. 78.5"
               value={w}
-              onChange={e => setW(e.target.value)}
+              onChange={e => { setW(e.target.value); setErr(''); }}
+              onKeyDown={handleKey}
               autoFocus
             />
           </div>
@@ -50,6 +59,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
               className="inp"
               type="date"
               value={date}
+              max={new Date().toISOString().split('T')[0]}
               onChange={e => setDate(e.target.value)}
             />
           </div>

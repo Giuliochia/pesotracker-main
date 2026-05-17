@@ -64,9 +64,11 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
     circonferenza_vita:profile.circonferenza_vita || '',
     nota:              profile.nota || '',
   });
-  const [saving, setSaving]     = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [saveErr, setSaveErr]     = useState('');
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || null);
   const [uploading, setUploading] = useState(false);
+  const [avatarErr, setAvatarErr] = useState('');
   const fileRef = useRef();
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
 
@@ -77,7 +79,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
     const ext = file.name.split('.').pop();
     const path = `${user.id}/avatar.${ext}`;
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-    if (upErr) { setUploading(false); return; }
+    if (upErr) { setUploading(false); setAvatarErr('Errore upload. Riprova.'); return; }
     const { data } = supabase.storage.from('avatars').getPublicUrl(path);
     const url = `${data.publicUrl}?t=${Date.now()}`;
     await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
@@ -86,6 +88,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
   };
 
   const save = async () => {
+    setSaveErr('');
     setSaving(true);
     const { error } = await supabase.from('profiles').update({
       nome:               f.nome,
@@ -100,7 +103,8 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
       nota:               f.nota || null,
     }).eq('id', user.id);
     setSaving(false);
-    if (!error) { onProfileUpdate(f); setEditing(false); }
+    if (error) { setSaveErr('Errore nel salvataggio. Riprova.'); }
+    else { onProfileUpdate(f); setEditing(false); }
   };
 
   // Stats
@@ -136,6 +140,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={uploadAvatar} />
         </div>
+        {avatarErr && <p className="err" style={{ fontSize: '0.7rem', marginTop: 4 }}>{avatarErr}</p>}
         <div className="prof-info">
           <div className="prof-name">{profile.nome}{eta ? `, ${eta} anni` : ''}</div>
           <div className="prof-email">{user.email}</div>
@@ -283,6 +288,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
                 <textarea className="inp" rows={3} placeholder="Scrivi qualcosa..." value={f.nota} onChange={set('nota')} style={{ resize: 'none' }} />
               </div>
 
+              {saveErr && <p className="err">{saveErr}</p>}
               <div className="modal-row">
                 <button className="btn-outline" onClick={() => setEditing(false)}>Annulla</button>
                 <button className="btn-g" style={{ flex: 2 }} onClick={save} disabled={saving}>

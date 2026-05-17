@@ -104,16 +104,16 @@ export default function Auth({ setUser }) {
             <div className="two-inp">
               <div className="field">
                 <label className="field-lbl">Altezza (cm)</label>
-                <input className="inp" type="number" placeholder="175" value={f.altezza} onChange={set('altezza')} />
+                <input className="inp" type="number" placeholder="175" min="100" max="250" value={f.altezza} onChange={set('altezza')} />
               </div>
               <div className="field">
                 <label className="field-lbl">Peso iniziale (kg)</label>
-                <input className="inp" type="number" placeholder="80" value={f.peso_iniziale} onChange={set('peso_iniziale')} />
+                <input className="inp" type="number" placeholder="80" min="20" max="500" value={f.peso_iniziale} onChange={set('peso_iniziale')} />
               </div>
             </div>
             <div className="field">
               <label className="field-lbl">Obiettivo peso (kg)</label>
-              <input className="inp" type="number" placeholder="70" value={f.obiettivo_kg} onChange={set('obiettivo_kg')} />
+              <input className="inp" type="number" placeholder="70" min="20" max="500" value={f.obiettivo_kg} onChange={set('obiettivo_kg')} />
             </div>
             {err && <p className="err">{err}</p>}
             <button className="btn-g" onClick={register} disabled={busy}>
