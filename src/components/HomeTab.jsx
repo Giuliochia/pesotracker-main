@@ -415,7 +415,7 @@ export default function HomeTab({ profile, measurements }) {
       <div className="home-two-col home-two-col-asym">
         <div className="card-neon card-bmi">
           <div className="card-label">BMI{profile.sesso ? ` · ${profile.sesso === 'M' ? '♂' : '♀'}` : ''}</div>
-          <div className="card-big-num" style={{ fontSize: '2.2rem' }}>{bmiVal}</div>
+          <div className="card-big-num" style={{ fontSize: '2.2rem', color: bmi.color }}>{bmiVal}</div>
           <div style={{ color: bmi.color, fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
             {bmi.lbl}
           </div>
