@@ -703,15 +703,14 @@ html, body, #root {
 
 /* BMI card specifics */
 .card-bmi {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .bmi-figure {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.7;
+  margin-top: 8px;
+  opacity: 0.9;
 }
 
 /* Progress bar */

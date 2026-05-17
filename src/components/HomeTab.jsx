@@ -75,6 +75,39 @@ function parseDietPlan(plan) {
   return { days, tips };
 }
 
+function BmiGauge({ bmiVal, color }) {
+  const bmi = parseFloat(bmiVal);
+  if (isNaN(bmi)) return null;
+  const cx = 36, cy = 34, r = 26, thick = 7;
+  const MIN = 15, MAX = 40;
+
+  const toXY = (a) => ({
+    x: cx + r * Math.cos(a),
+    y: cy - r * Math.sin(a),
+  });
+
+  const seg = (a1, a2) => {
+    const p1 = toXY(a1), p2 = toXY(a2);
+    const large = Math.abs(a1 - a2) > Math.PI ? 1 : 0;
+    return `M${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A${r} ${r} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  };
+
+  const ang = (b) => Math.PI * (1 - (Math.min(MAX, Math.max(MIN, b)) - MIN) / (MAX - MIN));
+  const a185 = ang(18.5), a25 = ang(25), a30 = ang(30);
+  const needle = toXY(ang(bmi));
+
+  return (
+    <svg width="72" height="44" viewBox="0 0 72 44" style={{ display: 'block', margin: '4px auto 0' }}>
+      <path d={seg(Math.PI, 0)} stroke="rgba(255,255,255,0.06)" strokeWidth={thick} fill="none" />
+      <path d={seg(Math.PI, a185)} stroke="#5352ED" strokeWidth={thick} fill="none" opacity="0.75" />
+      <path d={seg(a185, a25)} stroke="#00FF41" strokeWidth={thick} fill="none" opacity="0.75" />
+      <path d={seg(a25, a30)} stroke="#FFA502" strokeWidth={thick} fill="none" opacity="0.75" />
+      <path d={seg(a30, 0)} stroke="#FF4444" strokeWidth={thick} fill="none" opacity="0.75" />
+      <circle cx={needle.x.toFixed(2)} cy={needle.y.toFixed(2)} r="5" fill={color} stroke="#0d0d0d" strokeWidth="2" />
+    </svg>
+  );
+}
+
 function DietPlanView({ plan }) {
   const [dayIdx, setDayIdx] = React.useState(0);
   const { days, tips } = parseDietPlan(plan);
@@ -339,14 +372,7 @@ export default function HomeTab({ profile, measurements }) {
             {bmi.lbl}
           </div>
           <div className="bmi-figure">
-            <svg width="36" height="60" viewBox="0 0 36 60" fill="none">
-              <circle cx="18" cy="8" r="7" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5"/>
-              <line x1="18" y1="15" x2="18" y2="38" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="18" y1="22" x2="6" y2="32" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="18" y1="22" x2="30" y2="32" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="18" y1="38" x2="10" y2="55" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="18" y1="38" x2="26" y2="55" stroke="rgba(0,255,65,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <BmiGauge bmiVal={bmiVal} color={bmi.color} />
           </div>
         </div>
         <div className="card-neon card-progress">
