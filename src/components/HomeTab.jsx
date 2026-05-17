@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import WeightChart from './WeightChart';
 import { supabase } from '../supabaseClient';
+import GuideModal from './GuideModal';
 
 const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
@@ -54,6 +55,7 @@ function DietPlanView({ plan }) {
 
 export default function HomeTab({ profile, measurements }) {
   const [chartDays, setChartDays] = useState(7);
+  const [showGuide, setShowGuide] = useState(false);
   const [dietPlan, setDietPlan] = useState(null);
   const [loadingDiet, setLoadingDiet] = useState(false);
   const [dietErr, setDietErr] = useState('');
@@ -135,7 +137,16 @@ export default function HomeTab({ profile, measurements }) {
             <span className="home-logo-text">PESO TRACKER</span>
           </span>
         </div>
+        <button className="home-guide-btn" onClick={() => setShowGuide(true)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
       </div>
+
+      {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
 
       {/* GREETING */}
       <div className="home-greeting">

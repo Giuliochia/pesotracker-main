@@ -1861,3 +1861,166 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .diet-line {
   color: rgba(255,255,255,0.6);
 }
+
+/* ═══════════════════════════════════════════════
+   GUIDE MODAL
+═══════════════════════════════════════════════ */
+.home-guide-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+}
+.home-guide-btn:active { color: #00FF41; border-color: rgba(0,255,65,0.4); }
+
+.guide-modal {
+  background: var(--bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 32px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.guide-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.guide-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.guide-tab-btn {
+  flex: 1;
+  padding: 9px 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.guide-tab-on {
+  background: rgba(0,255,65,0.1);
+  border-color: rgba(0,255,65,0.35);
+  color: #00FF41;
+}
+.guide-content {
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tutorial sections */
+.guide-section {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.guide-section:last-child { border-bottom: none; margin-bottom: 0; }
+.guide-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.guide-section-icon { font-size: 1.1rem; }
+.guide-section-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.guide-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.guide-list-item {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.5;
+  padding-left: 12px;
+  border-left: 2px solid rgba(0,255,65,0.2);
+}
+
+/* Changelog */
+.guide-release {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.guide-release:last-child { border-bottom: none; margin-bottom: 0; }
+.guide-release-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.guide-release-ver {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #00FF41;
+}
+.guide-release-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: rgba(0,255,65,0.15);
+  color: #00FF41;
+  border: 1px solid rgba(0,255,65,0.3);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.guide-release-date {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.3);
+  margin-left: auto;
+}
+
+/* Tips */
+.guide-tip {
+  margin-bottom: 16px;
+  padding: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+}
+.guide-tip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.guide-tip-icon { font-size: 1rem; }
+.guide-tip-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+}
+.guide-tip-body {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.55;
+  margin: 0;
+}
