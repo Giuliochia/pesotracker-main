@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WeightChart from './WeightChart';
 import { supabase } from '../supabaseClient';
 import GuideModal from './GuideModal';
+import BellModal from './BellModal';
 
 const BMI_INFO = b =>
   b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
@@ -62,6 +63,7 @@ export default function HomeTab({ profile, measurements }) {
   const [notifGranted, setNotifGranted] = useState(
     typeof Notification !== 'undefined' ? Notification.permission === 'granted' : false
   );
+  const [showBell, setShowBell] = useState(false);
 
   // Load last saved diet plan
   useEffect(() => {
@@ -141,10 +143,14 @@ export default function HomeTab({ profile, measurements }) {
   const eta  = calcEta(profile.data_nascita);
   const tdee = calcTDEE(kg, altezza, eta, profile.sesso, profile.attivita);
 
-  const generateDiet = async () => {
+  const generateDiet = async (random = false) => {
     setLoadingDiet(true);
     setDietErr('');
     try {
+      let foodPrefs = {};
+      if (!random) {
+        try { foodPrefs = JSON.parse(localStorage.getItem('food_prefs') || '{}'); } catch {}
+      }
       const { data, error } = await supabase.functions.invoke('diet-advice', {
         body: {
           peso: kg,
@@ -155,6 +161,8 @@ export default function HomeTab({ profile, measurements }) {
           obiettivo: profile.obiettivo_tipo || 'dimagrire',
           attivita: profile.attivita || 'moderato',
           tdee,
+          food_prefs: foodPrefs,
+          random,
         },
       });
       if (error) throw new Error(error.message || JSON.stringify(error));
@@ -184,12 +192,12 @@ export default function HomeTab({ profile, measurements }) {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-        <button className="home-bell" onClick={requestNotif} title="Notifiche">
+        <button type="button" className="home-bell" onClick={() => setShowBell(true)} title="Impostazioni notifiche e piano AI">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
-          {notifGranted && <span className="home-bell-dot" />}
+          {!notifGranted && <span className="home-bell-dot" />}
         </button>
         <button className="home-guide-btn" onClick={() => setShowGuide(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -202,6 +210,16 @@ export default function HomeTab({ profile, measurements }) {
       </div>
 
       {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
+      {showBell && (
+        <BellModal
+          onClose={() => setShowBell(false)}
+          notifGranted={notifGranted}
+          onRequestNotif={async () => {
+            await requestNotif();
+            setShowBell(false);
+          }}
+        />
+      )}
 
       {/* GREETING */}
       <div className="home-greeting">
@@ -327,12 +345,17 @@ export default function HomeTab({ profile, measurements }) {
         </div>
 
         {!dietPlan && !loadingDiet && (
-          <button className="btn-diet-generate" onClick={generateDiet}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/><path d="M18 2v4h4"/>
-            </svg>
-            Genera il mio piano alimentare
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button className="btn-diet-generate" onClick={() => generateDiet(false)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/><path d="M18 2v4h4"/>
+              </svg>
+              Genera il mio piano alimentare
+            </button>
+            <button className="btn-diet-regen" onClick={() => generateDiet(true)}>
+              🎲 Piano casuale (ignora preferenze)
+            </button>
+          </div>
         )}
 
         {loadingDiet && (
@@ -346,16 +369,25 @@ export default function HomeTab({ profile, measurements }) {
           <div style={{ color: '#FF4444', fontSize: '0.78rem', marginBottom: 10 }}>{dietErr}</div>
         )}
 
-        {dietPlan && (
+        {dietPlan && !loadingDiet && (
           <>
             <DietPlanView plan={dietPlan} />
-            <button
-              className="btn-diet-regen"
-              onClick={() => { setDietPlan(null); setDietErr(''); }}
-              style={{ marginTop: 14 }}
-            >
-              Rigenera piano
-            </button>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button
+                className="btn-diet-regen"
+                onClick={() => { setDietPlan(null); setDietErr(''); generateDiet(false); }}
+                style={{ flex: 1 }}
+              >
+                Rigenera piano
+              </button>
+              <button
+                className="btn-diet-regen"
+                onClick={() => { setDietPlan(null); setDietErr(''); generateDiet(true); }}
+                style={{ flex: 1 }}
+              >
+                🎲 Casuale
+              </button>
+            </div>
           </>
         )}
       </div>

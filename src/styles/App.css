@@ -665,6 +665,13 @@ html, body, #root {
   border: 1.5px solid var(--bg);
 }
 
+.bell-notif-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
+}
+
 /* Greeting */
 .home-greeting {
   margin-bottom: 16px;
