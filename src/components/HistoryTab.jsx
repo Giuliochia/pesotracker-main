@@ -9,10 +9,27 @@ const fmtDate = d =>
 const fmtDateShort = d =>
   new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: '2-digit' });
 
+function DeltaBadge({ a, b, unit = 'cm' }) {
+  if (a == null || b == null) return <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>;
+  const diff = (b - a).toFixed(1);
+  const color = +diff < 0 ? '#00FF41' : +diff > 0 ? '#FF4444' : 'rgba(255,255,255,0.4)';
+  const sign = +diff > 0 ? '+' : '';
+  return <span style={{ color, fontWeight: 700, fontSize: '0.75rem' }}>{sign}{diff} {unit}</span>;
+}
+
 export default function HistoryTab({ measurements, goalWeight, bodyMeasurements = [], bodyPhotos = [] }) {
   const [bodyKey, setBodyKey] = useState('vita');
   const [lightbox, setLightbox] = useState(null);
   const [showChartOptions, setShowChartOptions] = useState({ avg: true, trend: true });
+
+  // Photo compare state
+  const [photoCompareMode, setPhotoCompareMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
+  const [photoCompareOpen, setPhotoCompareOpen] = useState(false);
+
+  // Measurement compare state
+  const [measCompareMode, setMeasCompareMode] = useState(false);
+  const [selectedMeasDates, setSelectedMeasDates] = useState([]);
 
   const rev = [...measurements].reverse();
 
@@ -27,10 +44,39 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
     : 0;
   const mediaGg = giorni > 0 ? (Math.abs(kgPersi) / giorni).toFixed(3) : 0;
 
-  // Body measurements chart data for selected key
   const bodyChartData = bodyMeasurements
     .filter(b => b[bodyKey] != null)
     .map(b => ({ date: b.date, value: +b[bodyKey] }));
+
+  // Photo compare helpers
+  const togglePhotoSelect = (photo) => {
+    setSelectedPhotos(prev => {
+      const idx = prev.findIndex(p => p.id === photo.id);
+      if (idx >= 0) return prev.filter(p => p.id !== photo.id);
+      if (prev.length >= 2) return prev;
+      return [...prev, photo];
+    });
+  };
+
+  const exitPhotoCompare = () => {
+    setPhotoCompareMode(false);
+    setSelectedPhotos([]);
+    setPhotoCompareOpen(false);
+  };
+
+  // Measurement compare helpers
+  const sortedBodyMeas = [...bodyMeasurements].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const toggleMeasDate = (entry) => {
+    setSelectedMeasDates(prev => {
+      const idx = prev.findIndex(e => e.id === entry.id);
+      if (idx >= 0) return prev.filter(e => e.id !== entry.id);
+      if (prev.length >= 2) return prev;
+      return [...prev, entry];
+    });
+  };
+
+  const measA = selectedMeasDates[0];
+  const measB = selectedMeasDates[1];
 
   return (
     <div className="pg">
@@ -97,106 +143,208 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
       {/* MISURE CORPOREE */}
       {bodyMeasurements.length > 0 && (
         <div className="card-neon" style={{ marginBottom: 12 }}>
-          <div className="card-label" style={{ marginBottom: 12 }}>MISURE CORPOREE</div>
-
-          {/* Selector */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-            {Object.entries(BODY_LABELS).map(([k, l]) => {
-              const hasData = bodyMeasurements.some(b => b[k] != null);
-              if (!hasData) return null;
-              return (
-                <button
-                  key={k}
-                  className={`chart-days-btn ${bodyKey === k ? 'chart-days-btn-on' : ''}`}
-                  onClick={() => setBodyKey(k)}
-                >
-                  {l}
-                </button>
-              );
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div className="card-label" style={{ marginBottom: 0 }}>MISURE CORPOREE</div>
+            {bodyMeasurements.length >= 2 && (
+              <button
+                className={`chart-days-btn ${measCompareMode ? 'chart-days-btn-on' : ''}`}
+                onClick={() => { setMeasCompareMode(v => !v); setSelectedMeasDates([]); }}
+              >
+                {measCompareMode ? 'Chiudi' : 'Confronta'}
+              </button>
+            )}
           </div>
 
-          {/* Mini chart for selected body measurement */}
-          {bodyChartData.length >= 2 ? (
-            <div style={{ position: 'relative', height: 100, marginBottom: 12 }}>
-              <svg width="100%" height="100" viewBox={`0 0 300 100`} preserveAspectRatio="none">
-                {(() => {
-                  const vals = bodyChartData.map(b => b.value);
-                  const minV = Math.min(...vals) - 2;
-                  const maxV = Math.max(...vals) + 2;
-                  const range = maxV - minV || 1;
-                  const points = vals.map((v, i) => {
-                    const x = (i / (vals.length - 1)) * 300;
-                    const y = 90 - ((v - minV) / range) * 80;
-                    return `${x},${y}`;
-                  }).join(' ');
-                  const lastVal = vals[vals.length - 1];
-                  const firstVal = vals[0];
-                  const isDown = lastVal <= firstVal;
-                  const lineColor = isDown ? '#00FF41' : '#FF4444';
+          {/* Compare mode */}
+          {measCompareMode ? (
+            <div>
+              <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
+                Seleziona 2 date da confrontare ({selectedMeasDates.length}/2)
+              </p>
+              <div className="compare-date-list">
+                {sortedBodyMeas.map(entry => {
+                  const sel = selectedMeasDates.findIndex(e => e.id === entry.id);
+                  const selIdx = sel >= 0 ? sel + 1 : null;
+                  const disabled = selectedMeasDates.length >= 2 && sel < 0;
                   return (
-                    <>
-                      <polyline points={points} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      {vals.map((v, i) => {
+                    <button
+                      key={entry.id}
+                      className={`compare-date-btn ${selIdx ? 'compare-date-on' : ''} ${disabled ? 'compare-date-disabled' : ''}`}
+                      onClick={() => !disabled && toggleMeasDate(entry)}
+                    >
+                      <span className="compare-date-num">{selIdx ?? '·'}</span>
+                      <span>{fmtDateShort(entry.date)}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>
+                        {Object.entries(BODY_LABELS).filter(([k]) => entry[k] != null).map(([, l]) => l).join(' · ')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Comparison result */}
+              {measA && measB && (
+                <div className="meas-compare-card">
+                  <div className="meas-compare-header">
+                    <span className="meas-compare-col meas-compare-a">{fmtDateShort(measA.date)}</span>
+                    <span className="meas-compare-col-center">Δ</span>
+                    <span className="meas-compare-col meas-compare-b">{fmtDateShort(measB.date)}</span>
+                  </div>
+                  {Object.entries(BODY_LABELS).map(([k, l]) => {
+                    if (measA[k] == null && measB[k] == null) return null;
+                    return (
+                      <div key={k} className="meas-compare-row">
+                        <span className="meas-compare-val">{measA[k] != null ? `${measA[k]} cm` : '—'}</span>
+                        <span className="meas-compare-lbl">{l}</span>
+                        <DeltaBadge a={measA[k]} b={measB[k]} />
+                        <span className="meas-compare-val meas-compare-val-right">{measB[k] != null ? `${measB[k]} cm` : '—'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Selector */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                {Object.entries(BODY_LABELS).map(([k, l]) => {
+                  const hasData = bodyMeasurements.some(b => b[k] != null);
+                  if (!hasData) return null;
+                  return (
+                    <button
+                      key={k}
+                      className={`chart-days-btn ${bodyKey === k ? 'chart-days-btn-on' : ''}`}
+                      onClick={() => setBodyKey(k)}
+                    >
+                      {l}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Mini chart */}
+              {bodyChartData.length >= 2 && (
+                <div style={{ position: 'relative', height: 100, marginBottom: 12 }}>
+                  <svg width="100%" height="100" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    {(() => {
+                      const vals = bodyChartData.map(b => b.value);
+                      const minV = Math.min(...vals) - 2;
+                      const maxV = Math.max(...vals) + 2;
+                      const range = maxV - minV || 1;
+                      const points = vals.map((v, i) => {
                         const x = (i / (vals.length - 1)) * 300;
                         const y = 90 - ((v - minV) / range) * 80;
-                        return <circle key={i} cx={x} cy={y} r="3" fill={lineColor} />;
-                      })}
-                    </>
+                        return `${x},${y}`;
+                      }).join(' ');
+                      const isDown = vals[vals.length - 1] <= vals[0];
+                      const lineColor = isDown ? '#00FF41' : '#FF4444';
+                      return (
+                        <>
+                          <polyline points={points} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          {vals.map((v, i) => {
+                            const x = (i / (vals.length - 1)) * 300;
+                            const y = 90 - ((v - minV) / range) * 80;
+                            return <circle key={i} cx={x} cy={y} r="3" fill={lineColor} />;
+                          })}
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+              )}
+
+              {/* Latest chips */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {Object.entries(BODY_LABELS).map(([k, l]) => {
+                  const latest = [...bodyMeasurements].reverse().find(b => b[k] != null);
+                  if (!latest) return null;
+                  return (
+                    <div key={k} className="body-meas-chip">
+                      <div className="body-meas-chip-val">{latest[k]} cm</div>
+                      <div className="body-meas-chip-lbl">{l}</div>
+                    </div>
                   );
-                })()}
-              </svg>
-            </div>
-          ) : null}
-
-          {/* Latest values */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {Object.entries(BODY_LABELS).map(([k, l]) => {
-              const latest = [...bodyMeasurements].reverse().find(b => b[k] != null);
-              if (!latest) return null;
-              return (
-                <div key={k} className="body-meas-chip">
-                  <div className="body-meas-chip-val">{latest[k]} cm</div>
-                  <div className="body-meas-chip-lbl">{l}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* List */}
-          <div className="meas-list" style={{ marginTop: 12 }}>
-            {[...bodyMeasurements].reverse().slice(0, 5).map(b => (
-              <div className="meas-row" key={b.id}>
-                <div className="meas-row-left">
-                  <span className="meas-date">{fmtDateShort(b.date)}</span>
-                </div>
-                <div className="meas-row-right" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {Object.entries(BODY_LABELS).map(([k, l]) =>
-                    b[k] != null ? (
-                      <span key={k} style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>
-                        {l}: <strong style={{ color: '#fff' }}>{b[k]}</strong>
-                      </span>
-                    ) : null
-                  )}
-                </div>
+                })}
               </div>
-            ))}
-          </div>
+
+              {/* List */}
+              <div className="meas-list" style={{ marginTop: 12 }}>
+                {[...bodyMeasurements].reverse().slice(0, 5).map(b => (
+                  <div className="meas-row" key={b.id}>
+                    <div className="meas-row-left">
+                      <span className="meas-date">{fmtDateShort(b.date)}</span>
+                    </div>
+                    <div className="meas-row-right" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {Object.entries(BODY_LABELS).map(([k, l]) =>
+                        b[k] != null ? (
+                          <span key={k} style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>
+                            {l}: <strong style={{ color: '#fff' }}>{b[k]}</strong>
+                          </span>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* FOTO CORPOREE */}
       {bodyPhotos.length > 0 && (
         <div className="section-block">
-          <div className="section-title">FOTO CORPOREE</div>
-          <div className="photo-grid">
-            {bodyPhotos.map(p => (
-              <div key={p.id} className="photo-card" onClick={() => setLightbox(p)}>
-                <img src={p.photo_url} alt={fmtDateShort(p.date)} className="photo-thumb" />
-                <div className="photo-date">{fmtDateShort(p.date)}</div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div className="section-title" style={{ marginBottom: 0 }}>FOTO CORPOREE</div>
+            {bodyPhotos.length >= 2 && (
+              <button
+                className={`chart-days-btn ${photoCompareMode ? 'chart-days-btn-on' : ''}`}
+                onClick={() => photoCompareMode ? exitPhotoCompare() : setPhotoCompareMode(true)}
+              >
+                {photoCompareMode ? 'Annulla' : 'Confronta'}
+              </button>
+            )}
           </div>
+
+          {photoCompareMode && (
+            <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
+              Seleziona 2 foto ({selectedPhotos.length}/2)
+            </p>
+          )}
+
+          <div className="photo-grid">
+            {bodyPhotos.map(p => {
+              const selIdx = selectedPhotos.findIndex(s => s.id === p.id);
+              const isSelected = selIdx >= 0;
+              const disabled = photoCompareMode && selectedPhotos.length >= 2 && !isSelected;
+              return (
+                <div
+                  key={p.id}
+                  className={`photo-card ${isSelected ? 'photo-card-selected' : ''} ${disabled ? 'photo-card-disabled' : ''}`}
+                  onClick={() => {
+                    if (photoCompareMode) togglePhotoSelect(p);
+                    else setLightbox(p);
+                  }}
+                >
+                  <img src={p.photo_url} alt={fmtDateShort(p.date)} className="photo-thumb" />
+                  <div className="photo-date">{fmtDateShort(p.date)}</div>
+                  {isSelected && (
+                    <div className="photo-sel-badge">{selIdx + 1}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {photoCompareMode && selectedPhotos.length === 2 && (
+            <button
+              className="btn-photo-compare"
+              onClick={() => setPhotoCompareOpen(true)}
+            >
+              Confronta le 2 foto selezionate
+            </button>
+          )}
         </div>
       )}
 
@@ -252,6 +400,32 @@ export default function HistoryTab({ measurements, goalWeight, bodyMeasurements 
             />
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>{fmtDate(lightbox.date)}</div>
             <button className="btn-outline" onClick={() => setLightbox(null)}>Chiudi</button>
+          </div>
+        </div>
+      )}
+
+      {/* PHOTO COMPARE OVERLAY */}
+      {photoCompareOpen && selectedPhotos.length === 2 && (
+        <div className="overlay" style={{ zIndex: 200, alignItems: 'stretch', padding: 0 }} onClick={() => setPhotoCompareOpen(false)}>
+          <div className="photo-compare-screen" onClick={e => e.stopPropagation()}>
+            <div className="photo-compare-header">
+              <span className="photo-compare-title">CONFRONTO FOTO</span>
+              <button className="guide-close-btn" onClick={() => setPhotoCompareOpen(false)}>✕</button>
+            </div>
+            <div className="photo-compare-grid">
+              {selectedPhotos.map((p, i) => (
+                <div key={p.id} className="photo-compare-col">
+                  <div className={`photo-compare-label photo-compare-label-${i + 1}`}>
+                    {i === 0 ? 'PRIMA' : 'DOPO'}
+                  </div>
+                  <img src={p.photo_url} alt="" className="photo-compare-img" />
+                  <div className="photo-compare-date">{fmtDate(p.date)}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn-outline" style={{ margin: '0 20px 24px' }} onClick={() => setPhotoCompareOpen(false)}>
+              Chiudi
+            </button>
           </div>
         </div>
       )}
