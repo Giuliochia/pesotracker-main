@@ -1343,6 +1343,57 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ═══════════════════════════════════════════════
+   RICORDAMI TOGGLE
+═══════════════════════════════════════════════ */
+.ricordami-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ricordami-toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: background 0.25s, border-color 0.25s;
+  flex-shrink: 0;
+}
+
+.ricordami-toggle.ricordami-on {
+  background: rgba(0,255,65,0.25);
+  border-color: rgba(0,255,65,0.5);
+}
+
+.ricordami-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: transform 0.25s, background 0.25s;
+}
+
+.ricordami-on .ricordami-thumb {
+  transform: translateX(18px);
+  background: #00FF41;
+  box-shadow: 0 0 8px rgba(0,255,65,0.6);
+}
+
+.ricordami-lbl {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════════════
    GOALS TAB
 ═══════════════════════════════════════════════ */
 .goals-toggle {
@@ -1455,4 +1506,240 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 0.55rem;
   color: rgba(255,255,255,0.35);
   line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   ADD WEIGHT EXTENSIONS
+═══════════════════════════════════════════════ */
+.add-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid rgba(0,255,65,0.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: border-color 0.2s, color 0.2s;
+}
+.add-section-toggle:hover {
+  border-color: rgba(0,255,65,0.4);
+  color: rgba(255,255,255,0.75);
+}
+
+.body-meas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.add-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-photo-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.add-photo-btn:hover {
+  border-color: rgba(0,255,65,0.3);
+  color: rgba(255,255,255,0.8);
+}
+
+.add-photo-preview-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.add-photo-preview {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(0,255,65,0.3);
+}
+.add-photo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FF4444;
+  color: #fff;
+  font-size: 0.75rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════
+   BODY MEASUREMENTS IN HISTORY
+═══════════════════════════════════════════════ */
+.body-meas-chip {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 64px;
+}
+.body-meas-chip-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #00FF41;
+}
+.body-meas-chip-lbl {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════
+   PHOTO GRID IN HISTORY
+═══════════════════════════════════════════════ */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.photo-card {
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  transition: border-color 0.2s, transform 0.15s;
+}
+.photo-card:active {
+  transform: scale(0.97);
+}
+.photo-card:hover {
+  border-color: rgba(0,255,65,0.3);
+}
+.photo-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+.photo-date {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  padding: 4px 4px 5px;
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATION SETTINGS IN PROFILE
+═══════════════════════════════════════════════ */
+.notif-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 16px;
+}
+.notif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.notif-row-lbl {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+  font-weight: 600;
+}
+.btn-notif-enable {
+  background: rgba(0,255,65,0.15);
+  border: 1px solid rgba(0,255,65,0.4);
+  border-radius: 8px;
+  color: #00FF41;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.notif-section-lbl {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 14px 0 8px;
+}
+.notif-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.notif-options-wrap {
+  flex-wrap: wrap;
+}
+.notif-opt-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.notif-opt-btn.notif-opt-on {
+  border-color: #00FF41;
+  background: rgba(0,255,65,0.12);
+  color: #00FF41;
+}
+.notif-options-wrap .notif-opt-btn {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+.btn-notif-test {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px;
+  border-radius: 10px;
+  border: 1px dashed rgba(0,255,65,0.3);
+  background: none;
+  color: rgba(0,255,65,0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-notif-test:hover {
+  border-color: rgba(0,255,65,0.6);
+  color: #00FF41;
 }

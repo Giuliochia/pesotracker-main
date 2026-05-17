@@ -6,6 +6,7 @@ export default function Auth({ setUser }) {
   const [f, setF] = useState({ email: '', password: '', nome: '', altezza: '', peso_iniziale: '', obiettivo_kg: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ricordami, setRicordami] = useState(true);
 
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
 
@@ -14,6 +15,12 @@ export default function Auth({ setUser }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email: f.email, password: f.password });
     setBusy(false);
     if (error) return setErr(error.message);
+    if (!ricordami) {
+      sessionStorage.setItem('pt_no_persist', '1');
+      window.addEventListener('beforeunload', () => supabase.auth.signOut(), { once: true });
+    } else {
+      sessionStorage.removeItem('pt_no_persist');
+    }
     setUser(data.user);
   };
 
@@ -82,6 +89,15 @@ export default function Auth({ setUser }) {
               <label className="field-lbl">Password</label>
               <input className="inp" type="password" placeholder="••••••••" value={f.password} onChange={set('password')} />
             </div>
+            <label className="ricordami-row">
+              <div
+                className={`ricordami-toggle ${ricordami ? 'ricordami-on' : ''}`}
+                onClick={() => setRicordami(v => !v)}
+              >
+                <div className="ricordami-thumb" />
+              </div>
+              <span className="ricordami-lbl">Ricordami</span>
+            </label>
             {err && <p className="err">{err}</p>}
             <button className="btn-g" onClick={login} disabled={busy}>
               {busy ? 'Accesso in corso...' : 'ACCEDI'}

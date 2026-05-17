@@ -8,20 +8,24 @@ import ProfileTab from './ProfileTab';
 import AddWeight from './AddWeight';
 
 export default function Dashboard({ user }) {
-  const [profile, setProfile]       = useState(null);
-  const [measurements, setMeasurements] = useState([]);
-  const [tab, setTab]               = useState('home');
-  const [showAdd, setShowAdd]       = useState(false);
-  const [loading, setLoading]       = useState(true);
-  const [loadError, setLoadError]   = useState(false);
+  const [profile, setProfile]             = useState(null);
+  const [measurements, setMeasurements]   = useState([]);
+  const [bodyMeasurements, setBodyMeas]   = useState([]);
+  const [bodyPhotos, setBodyPhotos]       = useState([]);
+  const [tab, setTab]                     = useState('home');
+  const [showAdd, setShowAdd]             = useState(false);
+  const [loading, setLoading]             = useState(true);
+  const [loadError, setLoadError]         = useState(false);
 
   useEffect(() => { load(); }, [user]);
 
   const load = async (tries = 5) => {
     try {
-      const [{ data: p, error: pe }, { data: m }] = await Promise.all([
+      const [{ data: p }, { data: m }, { data: bm }, { data: bp }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('measurements').select('*').eq('user_id', user.id).order('date', { ascending: true }),
+        supabase.from('body_measurements').select('*').eq('user_id', user.id).order('date', { ascending: true }),
+        supabase.from('body_photos').select('*').eq('user_id', user.id).order('date', { ascending: false }),
       ]);
       if (!p && tries > 0) {
         await new Promise(r => setTimeout(r, 800));
@@ -30,6 +34,8 @@ export default function Dashboard({ user }) {
       if (!p) { setLoadError(true); setLoading(false); return; }
       setProfile(p);
       setMeasurements(m || []);
+      setBodyMeas(bm || []);
+      setBodyPhotos(bp || []);
       setLoading(false);
     } catch {
       if (tries > 0) {
@@ -70,7 +76,14 @@ export default function Dashboard({ user }) {
   return (
     <div className="shell">
       {tab === 'home'    && <HomeTab    profile={profile} measurements={measurements} />}
-      {tab === 'history' && <HistoryTab measurements={measurements} goalWeight={profile.obiettivo_kg} />}
+      {tab === 'history' && (
+        <HistoryTab
+          measurements={measurements}
+          goalWeight={profile.obiettivo_kg}
+          bodyMeasurements={bodyMeasurements}
+          bodyPhotos={bodyPhotos}
+        />
+      )}
       {tab === 'goals'   && <GoalsTab   profile={profile} measurements={measurements} />}
       {tab === 'profile' && (
         <ProfileTab
@@ -92,6 +105,11 @@ export default function Dashboard({ user }) {
               [...prev, m].sort((a, b) => new Date(a.date) - new Date(b.date))
             );
             setShowAdd(false);
+            // Reload body data in background
+            supabase.from('body_measurements').select('*').eq('user_id', user.id).order('date', { ascending: true })
+              .then(({ data }) => { if (data) setBodyMeas(data); });
+            supabase.from('body_photos').select('*').eq('user_id', user.id).order('date', { ascending: false })
+              .then(({ data }) => { if (data) setBodyPhotos(data); });
           }}
         />
       )}
