@@ -621,8 +621,8 @@ html, body, #root {
 
 .home-bell {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -631,6 +631,12 @@ html, body, #root {
   border-radius: 10px;
   color: rgba(255,255,255,0.6);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
 }
 
 .home-bell-dot {
@@ -1292,8 +1298,8 @@ html, body, #root {
 }
 
 .home-logo-img {
-  width: 44px;
-  height: 44px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(0,255,65,0.4));
 }
