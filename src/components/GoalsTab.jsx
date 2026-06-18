@@ -7,6 +7,12 @@ import {
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
 
+const BMI_INFO = b =>
+  b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
+  b < 25   ? { lbl: 'Normopeso', color: '#00FF41' } :
+  b < 30   ? { lbl: 'Sovrappeso', color: '#FFA502' } :
+             { lbl: 'Obesità',   color: '#FF4444' };
+
 /* ── helpers ── */
 function calcStreak(measurements) {
   if (!measurements.length) return 0;
@@ -170,6 +176,7 @@ export default function GoalsTab({ profile, measurements }) {
   const lockedBadges = BADGES.filter(b => !b.check(measurements, profile, kg));
 
   const bmiVal = (kg / ((+profile.altezza/100)**2)).toFixed(1);
+  const bmiInfo = BMI_INFO(+bmiVal);
 
   return (
     <div className="pg">
@@ -288,9 +295,9 @@ export default function GoalsTab({ profile, measurements }) {
           <div className="home-two-col">
             <div className="card-neon goals-card">
               <div className="card-label">BMI ATTUALE</div>
-              <div className="goals-big-val" style={{ color: '#5352ED' }}>{bmiVal}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
-                {+bmiVal < 18.5 ? 'Sottopeso' : +bmiVal < 25 ? 'Normopeso' : +bmiVal < 30 ? 'Sovrappeso' : 'Obesità'}
+              <div className="goals-big-val" style={{ color: bmiInfo.color }}>{bmiVal}</div>
+              <div style={{ fontSize: '0.65rem', color: bmiInfo.color, marginTop: 4, fontWeight: 700 }}>
+                {bmiInfo.lbl}
               </div>
             </div>
             <div className="card-neon goals-card">

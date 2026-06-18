@@ -17,7 +17,7 @@ const fmtDateShort = d =>
 const isYesterday = (dateA, dateB) => {
   const a = new Date(dateA); a.setHours(0,0,0,0);
   const b = new Date(dateB); b.setHours(0,0,0,0);
-  return Math.abs(a - b) <= 86400000 * 2;
+  return Math.abs(a - b) <= 86400000;
 };
 
 function calcEta(dataNascita) {

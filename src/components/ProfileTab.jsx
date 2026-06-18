@@ -208,7 +208,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
 
       <div className="app-footer">
         <img src="/logo.png" alt="Peso Tracker" style={{ width: 56, height: 56, objectFit: 'contain' }} />
-        <div className="app-footer-ver">v3.0 — Il tuo compagno di fitness</div>
+        <div className="app-footer-ver">v4.0 — Il tuo compagno di fitness</div>
       </div>
 
       <button className="btn-exit" onClick={() => supabase.auth.signOut()}>
