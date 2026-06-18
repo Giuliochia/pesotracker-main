@@ -80,10 +80,19 @@ export default function ChatAI({ profile, measurements, onClose }) {
         </div>
 
         {/* Input */}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
-            className="inp"
-            style={{ flex: 1, fontSize: '0.85rem' }}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 12,
+              padding: '10px 14px',
+              fontSize: '0.88rem',
+              color: '#fff',
+              outline: 'none',
+            }}
             placeholder="Scrivi un messaggio..."
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -91,10 +100,22 @@ export default function ChatAI({ profile, measurements, onClose }) {
             disabled={loading}
           />
           <button
-            className="btn-g"
-            style={{ padding: '0 16px', flexShrink: 0 }}
             onClick={send}
             disabled={loading || !input.trim()}
+            style={{
+              flexShrink: 0,
+              width: 42,
+              height: 42,
+              borderRadius: '50%',
+              background: input.trim() && !loading ? '#00FF41' : 'rgba(0,255,65,0.2)',
+              border: 'none',
+              cursor: input.trim() && !loading ? 'pointer' : 'default',
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.2s',
+            }}
           >
             ↑
           </button>
