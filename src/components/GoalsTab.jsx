@@ -66,7 +66,7 @@ const BADGES = [
   { id: 'fast',    label: 'Velocista',     icon: '⚡', desc: '>0.5 kg/settimana persi',      check: (m) => {
     if (m.length < 2) return false;
     const g = Math.round((new Date(m.at(-1).date)-new Date(m[0].date))/86400000);
-    return g > 0 && (Math.abs(+m[0].weight - +m.at(-1).weight)/g)*7 >= 0.5;
+    return g >= 7 && (Math.abs(+m[0].weight - +m.at(-1).weight)/g)*7 >= 0.5;
   }},
 ];
 

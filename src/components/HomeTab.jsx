@@ -156,6 +156,7 @@ export default function HomeTab({ profile, measurements }) {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [dietPlanDate, setDietPlanDate] = useState(null);
   const confettiFired = useRef(false);
+  const generatingDiet = useRef(false);
 
   // Load cached weekly analysis
   useEffect(() => {
@@ -174,7 +175,10 @@ export default function HomeTab({ profile, measurements }) {
       .limit(1)
       .single()
       .then(({ data }) => {
-        if (data?.plan) { setDietPlan(data.plan); setDietPlanDate(data.created_at); }
+        if (data?.plan && !generatingDiet.current) {
+          setDietPlan(data.plan);
+          setDietPlanDate(data.created_at);
+        }
       });
   }, [profile.id]);
 
@@ -286,6 +290,7 @@ export default function HomeTab({ profile, measurements }) {
   }
 
   const generateDiet = async (random = false) => {
+    generatingDiet.current = true;
     setLoadingDiet(true);
     setDietErr('');
     try {
@@ -316,6 +321,7 @@ export default function HomeTab({ profile, measurements }) {
     } catch (e) {
       setDietErr(e?.message || 'Errore nella generazione. Controlla la connessione e riprova.');
     }
+    generatingDiet.current = false;
     setLoadingDiet(false);
   };
 

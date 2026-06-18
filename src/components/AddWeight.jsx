@@ -167,7 +167,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
                 <img src={photoPreview} alt="preview" className="add-photo-preview" />
                 <button
                   className="add-photo-remove"
-                  onClick={() => { setPhoto(null); setPhotoPreview(null); }}
+                  onClick={() => { URL.revokeObjectURL(photoPreview); setPhoto(null); setPhotoPreview(null); }}
                 >×</button>
               </div>
             )}

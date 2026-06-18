@@ -87,8 +87,9 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
 
   // Stats
   const kg     = measurements.length ? +measurements.at(-1).weight : +profile.peso_iniziale;
-  const bmiVal = (kg / ((+profile.altezza / 100) ** 2)).toFixed(1);
-  const bmi    = BMI_INFO(+bmiVal);
+  const altezza = +profile.altezza;
+  const bmiVal = altezza > 0 ? (kg / ((altezza / 100) ** 2)).toFixed(1) : '—';
+  const bmi    = altezza > 0 ? BMI_INFO(+bmiVal) : { lbl: '—', color: 'rgba(255,255,255,0.4)' };
   const persi  = (+profile.peso_iniziale - kg).toFixed(1);
   const manca  = (kg - +profile.obiettivo_kg).toFixed(1);
   const giorni = measurements.length > 1
@@ -97,8 +98,8 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
   const ini  = (profile.nome || 'U')[0].toUpperCase();
   const eta  = calcEta(profile.data_nascita);
   const tdee = calcTDEE(kg, +profile.altezza, eta, profile.sesso, profile.attivita);
-  const pesoIdMin = (18.5 * ((+profile.altezza / 100) ** 2)).toFixed(1);
-  const pesoIdMax = (24.9 * ((+profile.altezza / 100) ** 2)).toFixed(1);
+  const pesoIdMin = altezza > 0 ? (18.5 * ((altezza / 100) ** 2)).toFixed(1) : null;
+  const pesoIdMax = altezza > 0 ? (24.9 * ((altezza / 100) ** 2)).toFixed(1) : null;
   const mediaGg = giorni > 0 && measurements.length > 1
     ? (Math.abs(persi) / giorni).toFixed(3)
     : null;
@@ -165,7 +166,7 @@ export default function ProfileTab({ profile, user, measurements, onProfileUpdat
           {mediaGg && <Row ico={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>} label="Media kg/giorno" val={`-${mediaGg} kg`} />}
           <Row ico={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} label="Giorni tracking" val={`${giorni}`} />
           <Row ico={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} label="Membro dal" val={new Date(profile.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' })} />
-          <Row ico={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>} label="Peso ideale" val={`${pesoIdMin}–${pesoIdMax} kg`} color="rgba(255,255,255,0.5)" />
+          {pesoIdMin && <Row ico={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>} label="Peso ideale" val={`${pesoIdMin}–${pesoIdMax} kg`} color="rgba(255,255,255,0.5)" />}
           {profile.nota && (
             <div className="info-row" style={{ flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
               <span className="info-row-key" style={{ color: 'rgba(255,255,255,0.4)' }}>📝 Note</span>
