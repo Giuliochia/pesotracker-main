@@ -54,9 +54,35 @@ const TUTORIAL = [
 
 const CHANGELOG = [
   {
+    version: 'v6.0',
+    date: 'Giugno 2026',
+    badge: 'NUOVO',
+    items: [
+      '🤖 Chat AI personale — chiedile consigli su dieta, allenamento e motivazione',
+      '💧 Tracciamento acqua giornaliero con contatore bicchieri',
+      '✏️ Modifica peso e aggiungi note alle misurazioni dallo Storico',
+      '⚡ Calorie consigliate (TDEE) mostrate nella Home',
+      '🏆 Modalità mantenimento quando raggiungi l\'obiettivo',
+      '🥇 Record personali: peso minimo e miglior settimana',
+      '📲 Onboarding guidato per i nuovi utenti',
+      '⬇️ Esporta misurazioni in CSV dallo Storico',
+    ],
+  },
+  {
+    version: 'v4.0–v5.0',
+    date: 'Giugno 2026',
+    items: [
+      '🎖️ Badge e obiettivi sbloccabili nel tab Obiettivi',
+      '📅 Analisi settimanale AI con grafico e predizione traguardo',
+      '💪 Supporto obiettivo massa muscolare con surplus calorico',
+      '🔵 Grafico BMI a semicerchio colorato per categoria',
+      '🗑️ Elimina misurazioni direttamente dallo Storico',
+      '🎉 Confetti al raggiungimento dell\'obiettivo',
+    ],
+  },
+  {
     version: 'v3.0',
     date: 'Maggio 2026',
-    badge: 'NUOVO',
     items: [
       '🥗 Piano alimentare AI personalizzato (powered by Groq/Llama)',
       '💾 Piano alimentare salvato automaticamente — non devi rigenerarlo ad ogni accesso',
