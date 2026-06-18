@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const WHATS_NEW_VERSION = '4.0';
+export const WHATS_NEW_VERSION = '5.0';
 const STORAGE_KEY = `whats_new_seen_v${WHATS_NEW_VERSION}`;
 
 export function shouldShowWhatsNew() {
@@ -13,34 +13,24 @@ export function markWhatsNewSeen() {
 
 const FEATURES = [
   {
-    icon: '🧠',
-    title: 'Analisi settimanale AI',
-    body: 'Ogni settimana un commento personalizzato sul tuo andamento, generato da AI. Trovi la card "Analisi settimanale" nella Home.',
+    icon: '🗑️',
+    title: 'Elimina misurazioni',
+    body: 'Nel tab Storico puoi ora eliminare una misurazione sbagliata: tocca il cestino sulla riga e conferma.',
+  },
+  {
+    icon: '📅',
+    title: 'Data del piano alimentare',
+    body: 'La card Piano Alimentare mostra ora la data in cui è stato generato, così sai sempre quanto è recente.',
   },
   {
     icon: '🎯',
-    title: 'Predizione obiettivo',
-    body: 'La app calcola automaticamente in quante settimane raggiungerai il tuo obiettivo al ritmo attuale.',
+    title: 'Predizione anche per massa',
+    body: 'La card di predizione obiettivo funziona ora anche per chi vuole aumentare di peso, non solo dimagrire.',
   },
   {
-    icon: '🎉',
-    title: 'Confetti al traguardo',
-    body: 'Quando raggiungi il 100% del tuo obiettivo parte una pioggia di coriandoli. Meriti di festeggiare!',
-  },
-  {
-    icon: '👆',
-    title: 'Swipe tra tab',
-    body: 'Scorri orizzontalmente per passare tra Home, Storico, Obiettivi e Profilo senza toccare la barra in basso.',
-  },
-  {
-    icon: '📈',
-    title: 'Grafico BMI nel tempo',
-    body: 'Nel tab Storico trovi il grafico del tuo BMI con la banda verde che indica la zona normopeso (18.5–25).',
-  },
-  {
-    icon: '⚡',
-    title: 'Gauge BMI colorato',
-    body: 'Il riquadro BMI in Home ora mostra un arco con le zone colorate e un indicatore che si posiziona sul tuo valore.',
+    icon: '🐛',
+    title: 'Fix: colore BMI e "ieri"',
+    body: 'Il colore BMI nel tab Obiettivi ora segue le stesse categorie della Home. Corretto anche il messaggio "rispetto a ieri".',
   },
 ];
 
