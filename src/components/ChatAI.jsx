@@ -22,13 +22,16 @@ export default function ChatAI({ profile, measurements, onClose }) {
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
     try {
+      const chatHistory = [...messages, userMsg].filter(m => m.role === 'user' || messages.indexOf(m) > 0);
       const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: { messages: [...messages, userMsg].filter(m => m.role !== 'assistant' || messages.indexOf(m) > 0), profile, measurements },
+        body: { messages: chatHistory, profile, measurements },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || JSON.stringify(error));
+      if (!data?.reply) throw new Error('Risposta vuota dal server');
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Errore di connessione. Riprova tra poco.' }]);
+    } catch (e) {
+      console.error('[ChatAI]', e);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Errore: ${e?.message || 'Connessione fallita'}. Riprova tra poco.` }]);
     }
     setLoading(false);
   };
