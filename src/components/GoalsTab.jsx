@@ -1,17 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS, LineElement, PointElement, LinearScale,
   CategoryScale, Filler, Tooltip,
 } from 'chart.js';
+import { BMI_INFO } from '../utils';
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
-
-const BMI_INFO = b =>
-  b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
-  b < 25   ? { lbl: 'Normopeso', color: '#00FF41' } :
-  b < 30   ? { lbl: 'Sovrappeso', color: '#FFA502' } :
-             { lbl: 'Obesità',   color: '#FF4444' };
 
 /* ── helpers ── */
 function calcStreak(measurements) {
@@ -44,13 +39,13 @@ const BADGES = [
   { id: 'meas25',  label: '25 Misure',     icon: '📈', desc: '25 rilevazioni completate',    check: (m) => m.length >= 25 },
   { id: 'meas50',  label: '50 Misure',     icon: '🗂️',  desc: '50 rilevazioni completate',    check: (m) => m.length >= 50 },
   { id: 'meas100', label: '100 Misure',    icon: '💯', desc: 'Cento misurazioni!',           check: (m) => m.length >= 100 },
-  // Streak
-  { id: 'str3',    label: '3 Giorni',      icon: '🔥', desc: '3 giorni consecutivi',         check: (m) => calcStreak(m) >= 3 },
-  { id: 'str7',    label: '7 Giorni',      icon: '📅', desc: 'Una settimana di tracking',    check: (m) => calcStreak(m) >= 7 },
-  { id: 'str14',   label: '2 Settimane',   icon: '🗓️',  desc: '14 giorni consecutivi',        check: (m) => calcStreak(m) >= 14 },
-  { id: 'str30',   label: '1 Mese',        icon: '🌙', desc: '30 giorni di costanza',        check: (m) => calcStreak(m) >= 30 },
-  { id: 'str60',   label: '2 Mesi',        icon: '⭐', desc: '60 giorni consecutivi',        check: (m) => calcStreak(m) >= 60 },
-  { id: 'str100',  label: '100 Giorni',    icon: '💫', desc: 'Cento giorni di streak!',      check: (m) => calcStreak(m) >= 100 },
+  // Streak — check receives (measurements, profile, kg, streak) to avoid recomputing
+  { id: 'str3',    label: '3 Giorni',      icon: '🔥', desc: '3 giorni consecutivi',         check: (m, p, kg, s) => s >= 3 },
+  { id: 'str7',    label: '7 Giorni',      icon: '📅', desc: 'Una settimana di tracking',    check: (m, p, kg, s) => s >= 7 },
+  { id: 'str14',   label: '2 Settimane',   icon: '🗓️',  desc: '14 giorni consecutivi',        check: (m, p, kg, s) => s >= 14 },
+  { id: 'str30',   label: '1 Mese',        icon: '🌙', desc: '30 giorni di costanza',        check: (m, p, kg, s) => s >= 30 },
+  { id: 'str60',   label: '2 Mesi',        icon: '⭐', desc: '60 giorni consecutivi',        check: (m, p, kg, s) => s >= 60 },
+  { id: 'str100',  label: '100 Giorni',    icon: '💫', desc: 'Cento giorni di streak!',      check: (m, p, kg, s) => s >= 100 },
   // Peso perso
   { id: 'kg1',     label: '-1 kg',         icon: '✅', desc: 'Primo kg perso!',              check: (m, p, kg) => +p.peso_iniziale - kg >= 1 },
   { id: 'kg3',     label: '-3 kg',         icon: '💪', desc: 'Persi 3 kg in totale',         check: (m, p, kg) => +p.peso_iniziale - kg >= 3 },
@@ -155,7 +150,7 @@ export default function GoalsTab({ profile, measurements }) {
     dataObiettivo = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   }
 
-  const streak = calcStreak(measurements);
+  const streak = useMemo(() => calcStreak(measurements), [measurements]);
   const minWeight = measurements.length ? Math.min(...measurements.map(m => +m.weight)).toFixed(1) : null;
 
   const last7  = measurements.slice(-7).map(m => +m.weight);
@@ -172,8 +167,8 @@ export default function GoalsTab({ profile, measurements }) {
   const msg = motivationalMsg(pct, streak);
 
   // Badges
-  const earnedBadges = BADGES.filter(b => b.check(measurements, profile, kg));
-  const lockedBadges = BADGES.filter(b => !b.check(measurements, profile, kg));
+  const earnedBadges = BADGES.filter(b => b.check(measurements, profile, kg, streak));
+  const lockedBadges = BADGES.filter(b => !b.check(measurements, profile, kg, streak));
 
   const bmiVal = (kg / ((+profile.altezza/100)**2)).toFixed(1);
   const bmiInfo = BMI_INFO(+bmiVal);

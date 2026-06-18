@@ -102,6 +102,10 @@ export default function Dashboard({ user }) {
           altezza={+profile.altezza}
           bodyMeasurements={bodyMeasurements}
           bodyPhotos={bodyPhotos}
+          onDeleteMeasurement={async (id) => {
+            await supabase.from('measurements').delete().eq('id', id);
+            setMeasurements(prev => prev.filter(m => m.id !== id));
+          }}
         />
       )}
       {tab === 'goals'   && <GoalsTab   profile={profile} measurements={measurements} />}

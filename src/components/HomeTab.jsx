@@ -4,12 +4,7 @@ import WeightChart from './WeightChart';
 import { supabase } from '../supabaseClient';
 import GuideModal from './GuideModal';
 import BellModal from './BellModal';
-
-const BMI_INFO = b =>
-  b < 18.5 ? { lbl: 'Sottopeso', color: '#5352ED' } :
-  b < 25   ? { lbl: 'Normopeso', color: '#00FF41' } :
-  b < 30   ? { lbl: 'Sovrappeso', color: '#FFA502' } :
-             { lbl: 'Obesità',   color: '#FF4444' };
+import { BMI_INFO, calcEta, calcTDEE } from '../utils';
 
 const fmtDateShort = d =>
   new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
@@ -20,24 +15,6 @@ const isYesterday = (dateA, dateB) => {
   return Math.abs(a - b) <= 86400000;
 };
 
-function calcEta(dataNascita) {
-  if (!dataNascita) return null;
-  const oggi = new Date();
-  const nasc = new Date(dataNascita);
-  let eta = oggi.getFullYear() - nasc.getFullYear();
-  const m = oggi.getMonth() - nasc.getMonth();
-  if (m < 0 || (m === 0 && oggi.getDate() < nasc.getDate())) eta--;
-  return eta;
-}
-
-function calcTDEE(peso, altezza, eta, sesso, attivita) {
-  if (!eta || !sesso || !peso || !altezza) return null;
-  const bmr = sesso === 'F'
-    ? 10 * peso + 6.25 * altezza - 5 * eta - 161
-    : 10 * peso + 6.25 * altezza - 5 * eta + 5;
-  const mult = { sedentario: 1.2, leggero: 1.375, moderato: 1.55, attivo: 1.725, estremo: 1.9 };
-  return Math.round(bmr * (mult[attivita] || 1.55));
-}
 
 const MEAL_ICONS = {
   'Colazione': '☀️',
@@ -177,6 +154,7 @@ export default function HomeTab({ profile, measurements }) {
   const [showBell, setShowBell] = useState(false);
   const [weeklyAnalysis, setWeeklyAnalysis] = useState('');
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [dietPlanDate, setDietPlanDate] = useState(null);
   const confettiFired = useRef(false);
 
   // Load cached weekly analysis
@@ -190,12 +168,14 @@ export default function HomeTab({ profile, measurements }) {
   useEffect(() => {
     supabase
       .from('diet_plans')
-      .select('plan')
+      .select('plan, created_at')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
-      .then(({ data }) => { if (data?.plan) setDietPlan(data.plan); });
+      .then(({ data }) => {
+        if (data?.plan) { setDietPlan(data.plan); setDietPlanDate(data.created_at); }
+      });
   }, [profile.id]);
 
   // Show local notification if measurement overdue
@@ -287,10 +267,14 @@ export default function HomeTab({ profile, measurements }) {
   const eta  = calcEta(profile.data_nascita);
   const tdee = calcTDEE(kg, altezza, eta, profile.sesso, profile.attivita);
 
-  // Goal prediction
+  // Goal prediction (works for both weight loss and mass gain)
   const dailyRate = mediaGg > 0 ? +mediaGg : null;
-  const missingKg = kg - +profile.obiettivo_kg;
-  const daysToGoal = (dailyRate && missingKg > 0 && giorni > 2) ? Math.round(missingKg / dailyRate) : null;
+  const missingKg = kg - +profile.obiettivo_kg; // positive = need to lose, negative = need to gain
+  const wantsMass = profile.obiettivo_tipo === 'massa';
+  const predictionValid = dailyRate && giorni > 2 && (
+    wantsMass ? missingKg < 0 : missingKg > 0
+  );
+  const daysToGoal = predictionValid ? Math.round(Math.abs(missingKg) / dailyRate) : null;
   const weeksToGoal = daysToGoal ? Math.ceil(daysToGoal / 7) : null;
 
   // Confetti when goal reached
@@ -326,7 +310,9 @@ export default function HomeTab({ profile, measurements }) {
       if (error) throw new Error(error.message || JSON.stringify(error));
       if (data?.error) throw new Error(data.error);
       setDietPlan(data.plan);
-      supabase.from('diet_plans').insert([{ user_id: profile.id, plan: data.plan }]);
+      await supabase.from('diet_plans').delete().eq('user_id', profile.id);
+      const { data: inserted } = await supabase.from('diet_plans').insert([{ user_id: profile.id, plan: data.plan }]).select('created_at').single();
+      if (inserted?.created_at) setDietPlanDate(inserted.created_at);
     } catch (e) {
       setDietErr(e?.message || 'Errore nella generazione. Controlla la connessione e riprova.');
     }
@@ -493,7 +479,7 @@ export default function HomeTab({ profile, measurements }) {
               : `Obiettivo raggiungibile in ~${weeksToGoal} settimane`}
           </div>
           <div className="predict-sub">
-            Al ritmo attuale di <strong>{mediaGg} kg/gg</strong> — ancora <strong>{missingKg.toFixed(1)} kg</strong> da perdere
+            Al ritmo attuale di <strong>{mediaGg} kg/gg</strong> — ancora <strong>{Math.abs(missingKg).toFixed(1)} kg</strong> {wantsMass ? 'da guadagnare' : 'da perdere'}
           </div>
         </div>
       )}
@@ -531,7 +517,7 @@ export default function HomeTab({ profile, measurements }) {
           <div>
             <div className="card-label" style={{ marginBottom: 0 }}>PIANO ALIMENTARE</div>
             <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
-              Personalizzato da AI · {profile.sesso === 'M' ? 'Uomo' : profile.sesso === 'F' ? 'Donna' : 'Profilo'}{tdee ? ` · ${tdee} kcal/gg` : ''}
+              Personalizzato da AI · {profile.sesso === 'M' ? 'Uomo' : profile.sesso === 'F' ? 'Donna' : 'Profilo'}{tdee ? ` · ${tdee} kcal/gg` : ''}{dietPlanDate ? ` · ${new Date(dietPlanDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
             </div>
           </div>
         </div>
