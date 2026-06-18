@@ -7,6 +7,7 @@ import GoalsTab from './GoalsTab';
 import ProfileTab from './ProfileTab';
 import AddWeight from './AddWeight';
 import WhatsNewModal, { shouldShowWhatsNew } from './WhatsNewModal';
+import OnboardingWizard from './OnboardingWizard';
 
 export default function Dashboard({ user }) {
   const [profile, setProfile]             = useState(null);
@@ -106,6 +107,10 @@ export default function Dashboard({ user }) {
             await supabase.from('measurements').delete().eq('id', id);
             setMeasurements(prev => prev.filter(m => m.id !== id));
           }}
+          onEditMeasurement={async (id, weight) => {
+            await supabase.from('measurements').update({ weight }).eq('id', id);
+            setMeasurements(prev => prev.map(m => m.id === id ? { ...m, weight } : m));
+          }}
         />
       )}
       {tab === 'goals'   && <GoalsTab   profile={profile} measurements={measurements} />}
@@ -119,6 +124,10 @@ export default function Dashboard({ user }) {
       )}
 
       <BottomNav active={tab} go={setTab} onAdd={() => setShowAdd(true)} />
+
+      {profile && !+profile.altezza && (
+        <OnboardingWizard userId={user.id} onComplete={updated => setProfile(p => ({ ...p, ...updated }))} />
+      )}
 
       {showWhatsNew && <WhatsNewModal onClose={() => setShowWhatsNew(false)} />}
 

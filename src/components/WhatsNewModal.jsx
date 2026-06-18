@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const WHATS_NEW_VERSION = '5.0';
+export const WHATS_NEW_VERSION = '6.0';
 const STORAGE_KEY = `whats_new_seen_v${WHATS_NEW_VERSION}`;
 
 export function shouldShowWhatsNew() {
@@ -13,24 +13,44 @@ export function markWhatsNewSeen() {
 
 const FEATURES = [
   {
-    icon: '🗑️',
-    title: 'Elimina misurazioni',
-    body: 'Nel tab Storico puoi ora eliminare una misurazione sbagliata: tocca il cestino sulla riga e conferma.',
+    icon: '🤖',
+    title: 'Chat AI personale',
+    body: 'Tocca il fumetto nell\'header della Home per chattare con l\'AI. Conosce i tuoi dati e risponde su dieta, fitness e motivazione.',
   },
   {
-    icon: '📅',
-    title: 'Data del piano alimentare',
-    body: 'La card Piano Alimentare mostra ora la data in cui è stato generato, così sai sempre quanto è recente.',
+    icon: '💧',
+    title: 'Tracciamento acqua',
+    body: 'Nuova card in Home per contare i bicchieri d\'acqua al giorno. Si azzera automaticamente ogni giorno.',
   },
   {
-    icon: '🎯',
-    title: 'Predizione anche per massa',
-    body: 'La card di predizione obiettivo funziona ora anche per chi vuole aumentare di peso, non solo dimagrire.',
+    icon: '✏️',
+    title: 'Modifica e note misurazioni',
+    body: 'Nel tab Storico puoi ora modificare un peso errato e aggiungere una nota ad ogni misurazione (es. "dopo palestra").',
   },
   {
-    icon: '🐛',
-    title: 'Fix: colore BMI e "ieri"',
-    body: 'Il colore BMI nel tab Obiettivi ora segue le stesse categorie della Home. Corretto anche il messaggio "rispetto a ieri".',
+    icon: '⚡',
+    title: 'Calorie consigliate',
+    body: 'La Home mostra ora le kcal giornaliere consigliate in base al tuo TDEE e obiettivo (deficit, mantenimento o surplus).',
+  },
+  {
+    icon: '🏆',
+    title: 'Modalità mantenimento',
+    body: 'Quando raggiungi il 100% del tuo obiettivo, l\'app entra in modalità mantenimento e ti mostra il range ideale.',
+  },
+  {
+    icon: '🥇',
+    title: 'Record personali',
+    body: 'Nel tab Obiettivi trovi i tuoi record: peso minimo raggiunto e miglior settimana di dimagrimento.',
+  },
+  {
+    icon: '📲',
+    title: 'Onboarding guidato',
+    body: 'I nuovi utenti vengono guidati in 3 step per configurare il profilo prima di iniziare a usare l\'app.',
+  },
+  {
+    icon: '⬇️',
+    title: 'Esporta i tuoi dati',
+    body: 'Nel tab Storico trovi il pulsante CSV per scaricare tutte le tue misurazioni in un file.',
   },
 ];
 

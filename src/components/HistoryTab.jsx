@@ -17,9 +17,11 @@ function DeltaBadge({ a, b, unit = 'cm' }) {
   return <span style={{ color, fontWeight: 700, fontSize: '0.75rem' }}>{sign}{diff} {unit}</span>;
 }
 
-export default function HistoryTab({ measurements, goalWeight, altezza = 0, bodyMeasurements = [], bodyPhotos = [], onDeleteMeasurement }) {
+export default function HistoryTab({ measurements, goalWeight, altezza = 0, bodyMeasurements = [], bodyPhotos = [], onDeleteMeasurement, onEditMeasurement }) {
   const [bodyKey, setBodyKey] = useState('vita');
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editWeight, setEditWeight] = useState('');
   const [lightbox, setLightbox] = useState(null);
   const [showChartOptions, setShowChartOptions] = useState({ avg: true, trend: true });
 
@@ -400,7 +402,27 @@ export default function HistoryTab({ measurements, goalWeight, altezza = 0, body
 
       {/* LISTA COMPLETA */}
       <div className="section-block">
-        <div className="section-title">TUTTE LE MISURAZIONI</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div className="section-title" style={{ marginBottom: 0 }}>TUTTE LE MISURAZIONI</div>
+          {measurements.length > 0 && (
+            <button
+              className="chart-days-btn"
+              onClick={() => {
+                const rows = ['Data,Peso (kg)'];
+                [...measurements].sort((a,b) => new Date(a.date)-new Date(b.date)).forEach(m => {
+                  rows.push(`${new Date(m.date).toLocaleDateString('it-IT')},${m.weight}`);
+                });
+                const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'peso-tracker.csv'; a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              ⬇ CSV
+            </button>
+          )}
+        </div>
         {measurements.length === 0 ? (
           <div className="empty-state">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,65,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
@@ -426,6 +448,28 @@ export default function HistoryTab({ measurements, goalWeight, altezza = 0, body
                         <button className="btn-g" style={{ flex: 1, padding: '6px 0', fontSize: '0.78rem', background: 'linear-gradient(135deg,#FF4444,#cc0000)' }} onClick={() => { onDeleteMeasurement(m.id); setPendingDelete(null); }}>Elimina</button>
                       </div>
                     </>
+                  ) : editingId === m.id ? (
+                    <>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Modifica peso — {fmtDate(m.date)}</div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          className="inp"
+                          type="number"
+                          step=".1"
+                          value={editWeight}
+                          onChange={e => setEditWeight(e.target.value)}
+                          style={{ flex: 1, padding: '6px 10px', fontSize: '0.9rem' }}
+                          autoFocus
+                        />
+                        <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.78rem' }} onClick={() => setEditingId(null)}>✕</button>
+                        <button className="btn-g" style={{ padding: '6px 12px', fontSize: '0.78rem' }} onClick={() => {
+                          const num = parseFloat(editWeight);
+                          if (isNaN(num) || num <= 0) return;
+                          onEditMeasurement(m.id, num);
+                          setEditingId(null);
+                        }}>✓</button>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <div className="meas-row-left">
@@ -437,13 +481,25 @@ export default function HistoryTab({ measurements, goalWeight, altezza = 0, body
                         </svg>
                         <span className="meas-date">{fmtDate(m.date)}</span>
                       </div>
-                      <div className="meas-row-right">
+                      <div className="meas-row-right" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {d !== null && (
                           <span className="meas-diff" style={{ color: +d > 0 ? '#FF4444' : '#00FF41' }}>
                             {+d > 0 ? `+${d}` : d} kg
                           </span>
                         )}
                         <span className="meas-weight">{m.weight} kg</span>
+                        {onEditMeasurement && (
+                          <button
+                            onClick={() => { setEditingId(m.id); setEditWeight(m.weight); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}
+                            title="Modifica"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                        )}
                         {onDeleteMeasurement && (
                           <button
                             onClick={() => setPendingDelete(m.id)}
@@ -455,6 +511,8 @@ export default function HistoryTab({ measurements, goalWeight, altezza = 0, body
                             </svg>
                           </button>
                         )}
+                        </div>
+                        {m.note && <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>📝 {m.note}</div>}
                       </div>
                     </>
                   )}

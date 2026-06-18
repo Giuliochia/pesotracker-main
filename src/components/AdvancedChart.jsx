@@ -123,19 +123,21 @@ export default function AdvancedChart({ measurements, goalWeight, showAvg = true
     maintainAspectRatio: false,
     animation: { duration: 600, easing: 'easeInOutQuart' },
     interaction: { mode: 'index', intersect: false },
+    events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(10,10,10,0.9)',
+        backgroundColor: 'rgba(10,10,10,0.95)',
         borderColor: 'rgba(0,255,65,0.3)',
         borderWidth: 1,
-        titleColor: 'rgba(255,255,255,0.6)',
+        titleColor: '#00FF41',
         bodyColor: '#fff',
-        padding: 10,
+        padding: 12,
         callbacks: {
+          title: ctx => ctx[0]?.label ?? '',
           label: ctx => {
-            const label = ctx.dataset.label;
-            return ` ${label}: ${ctx.parsed.y} kg`;
+            if (ctx.dataset.label === 'Obiettivo') return ` Obiettivo: ${ctx.parsed.y} kg`;
+            return ` ${ctx.dataset.label}: ${ctx.parsed.y} kg`;
           },
         },
       },

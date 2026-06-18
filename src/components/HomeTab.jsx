@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import GuideModal from './GuideModal';
 import BellModal from './BellModal';
 import { BMI_INFO, calcEta, calcTDEE } from '../utils';
+import ChatAI from './ChatAI';
 
 const fmtDateShort = d =>
   new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
@@ -152,9 +153,16 @@ export default function HomeTab({ profile, measurements }) {
     typeof Notification !== 'undefined' ? Notification.permission === 'granted' : false
   );
   const [showBell, setShowBell] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [weeklyAnalysis, setWeeklyAnalysis] = useState('');
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [dietPlanDate, setDietPlanDate] = useState(null);
+  const todayKey = new Date().toDateString();
+  const [water, setWater] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem('water_tracker') || '{}');
+    return saved.date === todayKey ? saved.count : 0;
+  });
+  const WATER_GOAL = 8;
   const confettiFired = useRef(false);
   const generatingDiet = useRef(false);
 
@@ -182,15 +190,20 @@ export default function HomeTab({ profile, measurements }) {
       });
   }, [profile.id]);
 
-  // Show local notification if measurement overdue
+  // Show local notification if measurement overdue and within preferred time window
   useEffect(() => {
     if (!measurements.length || Notification.permission !== 'granted') return;
     const last = measurements.at(-1);
     const diffH = (Date.now() - new Date(last.date)) / 3600000;
     if (diffH < 30) return;
-    const todayKey = `notif_shown_${new Date().toDateString()}`;
-    if (localStorage.getItem(todayKey)) return;
-    localStorage.setItem(todayKey, '1');
+    const shownKey = `notif_shown_${new Date().toDateString()}`;
+    if (localStorage.getItem(shownKey)) return;
+    const prefTime = localStorage.getItem('notif_time') || '08:00';
+    const [prefH, prefM] = prefTime.split(':').map(Number);
+    const now = new Date();
+    const diffMin = Math.abs(now.getHours() * 60 + now.getMinutes() - (prefH * 60 + prefM));
+    if (diffMin > 30) return;
+    localStorage.setItem(shownKey, '1');
     navigator.serviceWorker?.ready.then(sw => {
       sw.showNotification('Peso Tracker 💪', {
         body: 'Non ti sei pesato di recente! Aggiungi la tua misurazione di oggi.',
@@ -206,6 +219,12 @@ export default function HomeTab({ profile, measurements }) {
     const start = new Date(now.getFullYear(), 0, 1);
     const week = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
     return `${now.getFullYear()}_w${week}`;
+  };
+
+  const addWater = (n) => {
+    const next = Math.max(0, Math.min(WATER_GOAL + 2, water + n));
+    setWater(next);
+    localStorage.setItem('water_tracker', JSON.stringify({ date: todayKey, count: next }));
   };
 
   const generateAnalysis = async () => {
@@ -270,6 +289,11 @@ export default function HomeTab({ profile, measurements }) {
 
   const eta  = calcEta(profile.data_nascita);
   const tdee = calcTDEE(kg, altezza, eta, profile.sesso, profile.attivita);
+  const targetKcal = tdee
+    ? profile.obiettivo_tipo === 'massa'    ? tdee + 300
+    : profile.obiettivo_tipo === 'mantenere' ? tdee
+    : tdee - 500
+    : null;
 
   // Goal prediction (works for both weight loss and mass gain)
   const dailyRate = mediaGg > 0 ? +mediaGg : null;
@@ -342,6 +366,11 @@ export default function HomeTab({ profile, measurements }) {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+        <button type="button" className="home-bell" onClick={() => setShowChat(true)} title="Chat AI">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
         <button type="button" className="home-bell" onClick={() => setShowBell(true)} title="Impostazioni notifiche e piano AI">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -360,6 +389,7 @@ export default function HomeTab({ profile, measurements }) {
       </div>
 
       {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
+      {showChat && <ChatAI profile={profile} measurements={measurements} onClose={() => setShowChat(false)} />}
       {showBell && (
         <BellModal
           onClose={() => setShowBell(false)}
@@ -375,10 +405,27 @@ export default function HomeTab({ profile, measurements }) {
       <div className="home-greeting">
         <div className="home-greeting-text">
           <span style={{ color: '#fff', fontWeight: 700 }}>Ciao, </span>
-          <span style={{ color: '#00FF41', fontWeight: 900 }}>{profile.nome}</span>
+          <span style={{ color: +pct >= 100 ? '#FFD700' : '#00FF41', fontWeight: 900 }}>{profile.nome}</span>
         </div>
-        <div className="home-greeting-sub">Ecco il tuo stato attuale</div>
+        <div className="home-greeting-sub">
+          {+pct >= 100 ? '🏆 Obiettivo raggiunto! Sei in modalità mantenimento' : 'Ecco il tuo stato attuale'}
+        </div>
       </div>
+
+      {/* BANNER MANTENIMENTO */}
+      {+pct >= 100 && (
+        <div className="card-neon" style={{ background: 'linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,215,0,0.04))', border: '1px solid rgba(255,215,0,0.25)', marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: '1.8rem' }}>🏆</div>
+            <div>
+              <div style={{ fontWeight: 800, color: '#FFD700', fontSize: '0.9rem' }}>Modalità mantenimento attiva</div>
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>
+                Resta nel range <strong style={{ color: '#FFD700' }}>{(+profile.obiettivo_kg - 1).toFixed(1)}–{(+profile.obiettivo_kg + 1).toFixed(1)} kg</strong> per mantenere il risultato
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DUE CARD: PESO ATTUALE + OBIETTIVO */}
       <div className="home-two-col">
@@ -474,6 +521,23 @@ export default function HomeTab({ profile, measurements }) {
           <div className="mini-card-lbl">Kg/giorno</div>
         </div>
       </div>
+
+      {/* CALORIE CONSIGLIATE */}
+      {targetKcal && (
+        <div className="card-neon" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+          <div style={{ fontSize: '1.4rem' }}>⚡</div>
+          <div style={{ flex: 1 }}>
+            <div className="card-label" style={{ marginBottom: 2 }}>CALORIE CONSIGLIATE</div>
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>
+              {profile.obiettivo_tipo === 'massa' ? 'Surplus +300 kcal per aumentare massa' : profile.obiettivo_tipo === 'mantenere' ? 'Mantenimento al tuo TDEE' : 'Deficit -500 kcal per dimagrire ~0.5 kg/sett'}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#FFA502' }}>{targetKcal}</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>kcal/giorno</div>
+          </div>
+        </div>
+      )}
 
       {/* PREDIZIONE OBIETTIVO */}
       {daysToGoal && (
@@ -574,6 +638,30 @@ export default function HomeTab({ profile, measurements }) {
             </div>
           </>
         )}
+      </div>
+
+      {/* ACQUA */}
+      <div className="card-neon water-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div>
+            <div className="card-label" style={{ marginBottom: 0 }}>ACQUA OGGI</div>
+            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Obiettivo: {WATER_GOAL} bicchieri</div>
+          </div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 900, color: water >= WATER_GOAL ? '#00FF41' : '#5352ED' }}>
+            {water}/{WATER_GOAL}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+          {Array.from({ length: WATER_GOAL }).map((_, i) => (
+            <div key={i} style={{ fontSize: '1.3rem', opacity: i < water ? 1 : 0.2, transition: 'opacity 0.2s' }}>💧</div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-outline" style={{ flex: 1, padding: '8px 0', fontSize: '1rem' }} onClick={() => addWater(-1)}>−</button>
+          <button className="btn-g" style={{ flex: 2, padding: '8px 0' }} onClick={() => addWater(1)}>
+            + Bicchiere
+          </button>
+        </div>
       </div>
 
       {/* ULTIME MISURAZIONI */}

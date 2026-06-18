@@ -19,6 +19,14 @@ export default function BellModal({ onClose, notifGranted, onRequestNotif }) {
   const [tab, setTab] = useState(0);
   const [prefs, setPrefs] = useState(() => loadPrefs());
   const [saved, setSaved] = useState(false);
+  const [notifTime, setNotifTime] = useState(() => localStorage.getItem('notif_time') || '08:00');
+  const [timeSaved, setTimeSaved] = useState(false);
+
+  const saveNotifTime = () => {
+    localStorage.setItem('notif_time', notifTime);
+    setTimeSaved(true);
+    setTimeout(() => setTimeSaved(false), 2000);
+  };
 
   const savePrefs = () => {
     localStorage.setItem('food_prefs', JSON.stringify(prefs));
@@ -75,6 +83,27 @@ export default function BellModal({ onClose, notifGranted, onRequestNotif }) {
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 16, lineHeight: 1.5 }}>
                 iOS: richiede iOS 16.4+ e app installata
               </div>
+
+              {notifGranted && (
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', marginBottom: 6 }}>Orario promemoria</div>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+                    La notifica appare a quest&apos;ora se non ti sei pesato nelle ultime 30 ore
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="time"
+                      className="inp"
+                      value={notifTime}
+                      onChange={e => setNotifTime(e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                    <button className="btn-g" style={{ flex: 1 }} onClick={saveNotifTime}>
+                      {timeSaved ? '✓ Salvato!' : 'Salva'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

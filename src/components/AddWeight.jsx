@@ -14,6 +14,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
   const [err, setErr]   = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [note, setNote] = useState('');
   const [showBody, setShowBody] = useState(false);
   const [body, setBody] = useState({ vita: '', fianchi: '', petto: '', braccia: '' });
 
@@ -41,7 +42,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
     // 1. Save weight
     const { data: measData, error: measErr } = await supabase
       .from('measurements')
-      .insert([{ user_id: userId, weight: num, date: isoDate }])
+      .insert([{ user_id: userId, weight: num, date: isoDate, note: note.trim() || null }])
       .select()
       .single();
     if (measErr) { setBusy(false); return setErr(measErr.message); }
@@ -73,6 +74,7 @@ export default function AddWeight({ onClose, onSaved, userId }) {
     }
 
     setBusy(false);
+    if (navigator.vibrate) navigator.vibrate(60);
     onSaved(measData);
   };
 
@@ -114,6 +116,18 @@ export default function AddWeight({ onClose, onSaved, userId }) {
               value={date}
               max={new Date().toISOString().split('T')[0]}
               onChange={e => setDate(e.target.value)}
+            />
+          </div>
+
+          <div className="field">
+            <label className="field-lbl">Nota (opzionale)</label>
+            <input
+              className="inp"
+              type="text"
+              maxLength={120}
+              placeholder="es. dopo palestra, giorno di sgarro..."
+              value={note}
+              onChange={e => setNote(e.target.value)}
             />
           </div>
 

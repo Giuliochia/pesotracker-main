@@ -152,6 +152,21 @@ export default function GoalsTab({ profile, measurements }) {
 
   const streak = useMemo(() => calcStreak(measurements), [measurements]);
   const minWeight = measurements.length ? Math.min(...measurements.map(m => +m.weight)).toFixed(1) : null;
+  const minWeightDate = measurements.length
+    ? measurements.reduce((best, m) => +m.weight < +best.weight ? m : best).date
+    : null;
+  const maxWeightLostWeek = useMemo(() => {
+    if (measurements.length < 2) return null;
+    let max = 0;
+    for (let i = 1; i < measurements.length; i++) {
+      const diffDays = Math.round((new Date(measurements[i].date) - new Date(measurements[i-1].date)) / 86400000);
+      if (diffDays > 0 && diffDays <= 7) {
+        const loss = +measurements[i-1].weight - +measurements[i].weight;
+        if (loss > max) max = loss;
+      }
+    }
+    return max > 0 ? max.toFixed(1) : null;
+  }, [measurements]);
 
   const last7  = measurements.slice(-7).map(m => +m.weight);
   const prev7  = measurements.slice(-14, -7).map(m => +m.weight);
@@ -259,6 +274,26 @@ export default function GoalsTab({ profile, measurements }) {
               <div className="stat-lbl">Deviazione σ</div>
             </div>
           </div>
+
+          {/* Record personali */}
+          {minWeight && (
+            <div className="card-neon goals-card">
+              <div className="card-label" style={{ marginBottom: 12 }}>🏅 RECORD PERSONALI</div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, background: 'rgba(0,255,65,0.06)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#00FF41' }}>{minWeight} kg</div>
+                  <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Peso minimo</div>
+                  {minWeightDate && <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{fmtShort(minWeightDate)}</div>}
+                </div>
+                {maxWeightLostWeek && (
+                  <div style={{ flex: 1, background: 'rgba(0,255,65,0.06)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#00FF41' }}>-{maxWeightLostWeek} kg</div>
+                    <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Miglior settimana</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Tendenza settimanale */}
           <div className="card-neon goals-card">
